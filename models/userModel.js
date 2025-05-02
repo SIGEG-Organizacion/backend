@@ -1,5 +1,3 @@
-// models/userModel.js
-
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
@@ -17,52 +15,45 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
-    minlength: [6, "Password should be at least 6 characters long"], // Password length validation
+    minlength: [6, "Password should be at least 6 characters long"],
   },
-  role: { type: String, enum: ["student", "company", "admin"], required: true },
+  role: {
+    type: String,
+    enum: ["student", "company", "vadminTFG", "adminLink", "graduate"],
+    required: true,
+  },
+  resetToken: { type: String },
+  resetTokenExpire: { type: Date },
 });
 
+// Evita duplicados (correo ya existente)
 userSchema.post("save", function (error, doc, next) {
   if (error.name === "MongoError" && error.code === 11000) {
-    // Duplicate email error (11000 is the MongoDB code for duplicate key error)
     next(new Error("Email already exists"));
   } else {
-    next(error); // Pass the error to the next middleware
+    next(error);
   }
 });
 
-userSchema.pre("save", async function (next) {
-  const user = this;
-
-  // If the email is being modified or is new, check if it already exists in the database
-  if (this.isModified("email") || this.isNew) {
-    const existingUser = await mongoose
-      .model("User")
-      .findOne({ email: user.email });
-    if (existingUser) {
-      const error = new Error("Email already exists");
-      return next(error); // If email exists, throw error
-    }
-  }
-  next(); // Proceed with saving if no error
-});
-
+// Hash de contraseña antes de guardar (solo si fue modificada)
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
     try {
-      const salt = await bcrypt.genSalt(10); // Generate a salt
-      this.password = await bcrypt.hash(this.password, salt); // Hash the password
+      const salt = await bcrypt.genSalt(10);
+      this.password = await bcrypt.hash(this.password, salt);
     } catch (error) {
-      return next(error); // Pass any error to the next middleware
+      return next(error);
     }
   }
-  next(); // Proceed to save the user
+  next();
 });
 
+// Método para comparar contraseña en login
 userSchema.methods.comparePassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password); // Compare the hashes
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
+// Método para validar email (opcional, por si se usa en lógica externa)
 userSchema.methods.validateEmailFormat = function () {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return emailRegex.test(this.email);

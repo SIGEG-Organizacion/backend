@@ -22,3 +22,15 @@
 //       - Token generation works and the token is returned correctly
 //       - Token verification works and throws errors for invalid tokens
 //       - Optional: Token decoding works without verifying the token
+
+import jwt from "jsonwebtoken";
+
+export const generateAccessToken = (payload) => {
+  return jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || "1h",
+  });
+};
+
+export const verifyToken = (token) => {
+  return jwt.verify(token, process.env.JWT_SECRET);
+};
