@@ -1,30 +1,61 @@
 // models/studentModel.js
 
-// To-Do List for /models/studentModel.js
-// =====================================
-//
-// [ ] 1. Import mongoose library
-// [ ] 2. Define the student schema with fields:
-//       - userId: ObjectId (required, reference to 'User' model)
-//       - major: String (required)
-//       - admissionYear: Number (required)
-//       - applications: Array (array of ObjectIds, reference to 'Opportunity' model)
-// [ ] 3. Add a reference to the 'User' model for the userId field (populate user data when needed)
-// [ ] 4. Add validation for the major and admissionYear fields
-// [ ] 5. Create a model using mongoose.model() and export the model
-// [ ] 6. Add a method to populate applications for a student (to list opportunities the student has applied to)
-// [ ] 7. Test the model to ensure it works correctly with Mongoose operations (CRUD)
-// [ ] 8. Add any additional utility methods or validation if necessary (e.g., validate admission year)
-// [ ] 9. Implement a method to get student details along with their applications (using populate)
-
 import mongoose from "mongoose";
 
 const studentSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Reference to 'users'
-  major: { type: String, required: true },
-  admissionYear: { type: Number, required: true },
-  applications: [{ type: mongoose.Schema.Types.ObjectId, ref: "Opportunity" }], // References to 'opportunities'
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+
+  major: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function (v) {
+        return v.length > 0;
+      },
+      message: "Major cannot be empty",
+    },
+  },
+
+  admissionYear: {
+    type: Number,
+    required: true,
+    validate: {
+      validator: function (v) {
+        // Ensure admission year is between 1900 and the current year
+        return v >= 1900 && v <= new Date().getFullYear();
+      },
+      message: "Admission year must be between 1900 and the current year",
+    },
+  },
+
+  applications: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Opportunity",
+    },
+  ],
 });
+
+studentSchema.methods.populateApplications = async function () {
+  await this.populate("applications").execPopulate();
+  return this.applications;
+};
+
+studentSchema.methods.getCurrentAcademicYear = function () {
+  const currentYear = new Date().getFullYear();
+  const academicYear = currentYear - this.admissionYear + 1;
+  return academicYear;
+};
+
+studentSchema.methods.updateMajor = async function (newMajor) {
+  this.major = newMajor;
+  await this.save();
+  return this;
+};
 
 const Student = mongoose.model("Student", studentSchema);
 

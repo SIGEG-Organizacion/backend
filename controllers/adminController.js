@@ -1,32 +1,120 @@
-// To-Do List for /controllers/adminController.js
-// =============================================
-//
-// [ ] 1. Import necessary modules:
-//       - User model (from '../models/userModel.js')
-//       - Report model (from '../models/reportModel.js')
-// [ ] 2. Implement approveUser method to:
-//       - Validate incoming request (check if userId exists)
-//       - Update the user's status to 'approved'
-//       - Respond with success message or updated user data
-// [ ] 3. Implement generateReport method to:
-//       - Accept report type (e.g., "student applications", "user activities")
-//       - Retrieve the necessary data based on the report type
-//       - Aggregate or process data as needed (e.g., total applications, active users)
-//       - Save the generated report to the database
-//       - Respond with the generated report details
-// [ ] 4. Implement getAllUsers method to:
-//       - Retrieve and list all users in the system
-//       - Optionally, include filtering options (e.g., by role or status)
-//       - Respond with the list of users
-// [ ] 5. Implement getReports method to:
-//       - Retrieve all generated reports
-//       - Allow filtering by report type or date range
-//       - Respond with the list of reports
-// [ ] 6. Add error handling for:
-//       - User not found
-//       - Invalid or missing data in the request
-//       - Report generation errors
-// [ ] 7. Test the controller functions to ensure:
-//       - User approval works correctly (status update, success message)
-//       - Report generation and retrieval functions as expected
-//       - Error handling gives proper responses (e.g., for missing users or invalid data)
+import User from "../models/userModel.js";
+import Report from "../models/reportModel.js";
+
+export const approveUser = async (req, res) => {
+  const { userId } = req.params;
+
+  if (!userId) {
+    return res.status(400).json({ error: "userId is required in URL params" });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    user.status = "approved";
+    await user.save();
+
+    res.status(200).json({ message: "User approved successfully", user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const generateReport = async (req, res) => {
+  const { type } = req.body;
+
+  if (!type) {
+    return res.status(400).json({ error: "Report type is required" });
+  }
+
+  try {
+    let data = [];
+    let summary = "";
+
+    if (type === "student applications") {
+      // Example: count total student applications
+      const totalApplications = await User.aggregate([
+        { $match: { role: "student" } },
+        {
+          $lookup: {
+            from: "students",
+            localField: "_id",
+            foreignField: "userId",
+            as: "studentInfo",
+          },
+        },
+        { $unwind: "$studentInfo" },
+        { $project: { applications: "$studentInfo.applications" } },
+      ]);
+
+      const count = totalApplications.reduce(
+        (sum, u) => sum + (u.applications?.length || 0),
+        0
+      );
+
+      data = { totalApplications: count };
+      summary = `Total student applications: ${count}`;
+    } else if (type === "user activities") {
+      const totalUsers = await User.countDocuments();
+      const approvedUsers = await User.countDocuments({ status: "approved" });
+
+      data = { totalUsers, approvedUsers };
+      summary = `Users: ${totalUsers}, Approved: ${approvedUsers}`;
+    } else {
+      return res.status(400).json({ error: "Unsupported report type" });
+    }
+
+    const report = new Report({
+      type,
+      summary,
+      data,
+      generatedAt: new Date(),
+    });
+
+    await report.save();
+
+    res.status(201).json({ message: "Report generated successfully", report });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const getAllUsers = async (req, res) => {
+  const { role, status } = req.query;
+
+  try {
+    const filter = {};
+    if (role) filter.role = role;
+    if (status) filter.status = status;
+
+    const users = await User.find(filter).select("-password"); // Exclude passwords
+    res.status(200).json({ users });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const getReports = async (req, res) => {
+  const { type, from, to } = req.query;
+
+  try {
+    const filter = {};
+
+    if (type) filter.type = type;
+
+    if (from || to) {
+      filter.generatedAt = {};
+      if (from) filter.generatedAt.$gte = new Date(from);
+      if (to) filter.generatedAt.$lte = new Date(to);
+    }
+
+    const reports = await Report.find(filter).sort({ generatedAt: -1 });
+
+    res.status(200).json({ reports });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

@@ -1,26 +1,5 @@
 // models/opportunityModel.js
 
-// To-Do List for /models/opportunityModel.js
-// ==========================================
-//
-// [ ] 1. Import mongoose library
-// [ ] 2. Define the opportunity schema with fields:
-//       - companyId: ObjectId (required, reference to 'Company' model)
-//       - description: String (required)
-//       - requirements: String (required)
-//       - benefits: String (required)
-//       - mode: String (required, e.g., "remote", "on-site", "hybrid")
-//       - deadline: Date (required)
-//       - contact: String (required)
-// [ ] 3. Add a reference to the 'Company' model for the companyId field (populate company data when needed)
-// [ ] 4. Add validation for description, requirements, benefits, and contact fields
-// [ ] 5. Create a model using mongoose.model() and export the model
-// [ ] 6. Add methods to interact with opportunities:
-//         - Method to filter opportunities based on mode (remote, on-site)
-//         - Method to list opportunities within a certain date range
-// [ ] 7. Test the model to ensure it works correctly with Mongoose operations (CRUD)
-// [ ] 8. Add any additional utility methods or validation if necessary (e.g., validate deadline format)
-
 import mongoose from "mongoose";
 
 const opportunitySchema = new mongoose.Schema({
@@ -29,13 +8,87 @@ const opportunitySchema = new mongoose.Schema({
     ref: "Company",
     required: true,
   }, // Reference to 'companies'
-  description: { type: String, required: true },
-  requirements: { type: String, required: true },
-  benefits: { type: String, required: true },
-  mode: { type: String, required: true }, // "remote", "on-site", "hybrid"
-  deadline: { type: Date, required: true },
-  contact: { type: String, required: true },
+
+  description: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function (v) {
+        return v.trim().length > 0;
+      },
+      message: "Description cannot be empty",
+    },
+  },
+
+  requirements: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function (v) {
+        return v.trim().length > 0;
+      },
+      message: "Requirements cannot be empty",
+    },
+  },
+
+  benefits: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function (v) {
+        return v.trim().length > 0;
+      },
+      message: "Benefits cannot be empty",
+    },
+  },
+
+  mode: {
+    type: String,
+    required: true,
+    enum: ["remote", "on-site", "hybrid"],
+  },
+
+  deadline: {
+    type: Date,
+    required: true,
+  },
+
+  contact: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function (v) {
+        // Simple email validation (can be extended for phone numbers or other formats)
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return emailRegex.test(v);
+      },
+      message: "Invalid contact email format",
+    },
+  },
 });
+
+opportunitySchema.statics.filterByMode = async function (mode) {
+  if (!["remote", "on-site", "hybrid"].includes(mode)) {
+    throw new Error(
+      "Invalid mode. Please use 'remote', 'on-site', or 'hybrid'."
+    );
+  }
+  return this.find({ mode: mode });
+};
+
+opportunitySchema.statics.listByDateRange = async function (
+  startDate,
+  endDate
+) {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  if (start > end) {
+    throw new Error("Start date cannot be after end date.");
+  }
+
+  return this.find({ deadline: { $gte: start, $lte: end } });
+};
 
 const Opportunity = mongoose.model("Opportunity", opportunitySchema);
 
