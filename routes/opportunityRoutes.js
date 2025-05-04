@@ -23,3 +23,27 @@
 //       - Creating, updating, and deleting opportunities works as expected
 //       - Filtering and retrieving opportunities functions correctly
 //       - Proper responses and status codes are returned on success/failure
+
+import express from "express";
+import {
+  createOpportunity,
+  updateOpportunity,
+  deleteOpportunity,
+  getOpportunities,
+  getOpportunityById,
+  filterOpportunities,
+} from "../controllers/opportunityController.js";
+import { protect, authorizeRoles } from "../middlewares/authMiddleware.js";
+import { validateOpportunity } from "../middlewares/validationMiddleware.js";
+
+const router = express.Router();
+
+router.post("/create", protect, authorizeRoles("company"), validateOpportunity, createOpportunity);
+router.put("/update/:id", protect, authorizeRoles("company"), validateOpportunity, updateOpportunity);
+router.delete("/delete/:id", protect, authorizeRoles("company", "adminLink"), deleteOpportunity);
+
+router.get("/list", getOpportunities);
+router.get("/filter", filterOpportunities);
+router.get("/:id", getOpportunityById);
+
+export default router;
