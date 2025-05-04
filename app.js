@@ -5,6 +5,9 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import { connectDB } from "./config/db.js";
 import userRoutes from "./routes/userRoutes.js";
+import opportunityRoutes from "./routes/opportunityRoutes.js";
+import studentRoutes from "./routes/studentRoutes.js";
+
 
 // To-Do List for /app.js
 // ======================
@@ -57,6 +60,8 @@ connectDB();
 
 // Routes
 app.use("/api/users", userRoutes);
+app.use("/api/opportunities", opportunityRoutes);
+app.use("/api/students", studentRoutes);
 
 // Root route
 app.get("/", (req, res) => {
