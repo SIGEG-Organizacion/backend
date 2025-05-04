@@ -18,3 +18,35 @@
 //       - Incoming requests are properly validated
 //       - Invalid or incomplete data returns appropriate error messages
 //       - Routes that require validation only proceed if validation passes
+
+export const validateOpportunity = (req, res, next) => {
+    const { title, description, deadline, modality, companyId } = req.body;
+  
+    if (!title || !description || !deadline || !modality || !companyId) {
+      return res.status(400).json({
+        error: "Todos los campos obligatorios (title, description, deadline, modality, companyId) deben estar presentes.",
+      });
+    }
+  
+    // Validación de formato de fecha
+    if (isNaN(Date.parse(deadline))) {
+      return res.status(400).json({ error: "Formato de fecha no válido para 'deadline'." });
+    }
+  
+    next();
+  };
+  
+  export const validateApplication = (req, res, next) => {
+    const { opportunityId } = req.body;
+    const studentId = req.user?._id; // se asume que viene del token
+  
+    if (!opportunityId) {
+      return res.status(400).json({ error: "Falta el campo 'opportunityId'." });
+    }
+  
+    if (!studentId) {
+      return res.status(400).json({ error: "No se pudo identificar al estudiante desde el token." });
+    }
+  
+    next();
+  };  
