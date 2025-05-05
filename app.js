@@ -7,7 +7,7 @@ import { connectDB } from "./config/db.js";
 import userRoutes from "./routes/userRoutes.js";
 import opportunityRoutes from "./routes/opportunityRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
-
+import interestRoutes from "./routes/interestRoutes.js";
 
 // To-Do List for /app.js
 // ======================
@@ -62,6 +62,7 @@ connectDB();
 app.use("/api/users", userRoutes);
 app.use("/api/opportunities", opportunityRoutes);
 app.use("/api/students", studentRoutes);
+app.use("/api/interests", interestRoutes);
 
 // Root route
 app.get("/", (req, res) => {
