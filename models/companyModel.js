@@ -3,7 +3,7 @@
 // To-Do List for /models/companyModel.js
 // ======================================
 //
-// [ ] 1. Import mongoose library
+// [ ] 1. Imp3ort mongoose library
 // [ ] 2. Define the company schema with fields:
 //       - userId: ObjectId (required, reference to 'User' model)
 //       - companyName: String (required)

@@ -26,7 +26,7 @@
 
 import express from "express";
 import {
-  createOpportunity,
+  createPublication,
   updateOpportunity,
   deleteOpportunity,
   getOpportunities,
@@ -38,9 +38,26 @@ import { validateOpportunity } from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
 
-router.post("/create", protect, authorizeRoles("company"), validateOpportunity, createOpportunity);
-router.put("/update/:id", protect, authorizeRoles("company"), validateOpportunity, updateOpportunity);
-router.delete("/delete/:id", protect, authorizeRoles("company", "adminLink"), deleteOpportunity);
+router.post(
+  "/create",
+  protect,
+  authorizeRoles("company"),
+  validateOpportunity,
+  createPublication
+);
+router.put(
+  "/update/:id",
+  protect,
+  authorizeRoles("company"),
+  validateOpportunity,
+  updateOpportunity
+);
+router.delete(
+  "/delete/:id",
+  protect,
+  authorizeRoles("company", "adminLink"),
+  deleteOpportunity
+);
 
 router.get("/list", getOpportunities);
 router.get("/filter", filterOpportunities);

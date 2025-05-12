@@ -69,6 +69,30 @@ app.get("/", (req, res) => {
   res.send("Server is running!");
 });
 
+// 404 Handler for undefined routes
+app.use((req, res, next) => {
+  const error = new Error("Not Found");
+  error.status = 404;
+  next(error);
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  err.statusCode = err.statusCode || 500;
+  err.status = err.status || "error";
+
+  // Log the error in development
+  if (process.env.NODE_ENV === "development") {
+    console.error("ERROR", err);
+  }
+
+  // Send response
+  res.status(err.statusCode).json({
+    status: err.status,
+    message: err.message,
+  });
+});
+
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

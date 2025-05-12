@@ -65,13 +65,24 @@ const opportunitySchema = new mongoose.Schema({
       message: "Invalid contact email format",
     },
   },
+
+  status: {
+    type: String,
+    required: true,
+    enum: ["pending-aproval", "closed", "open"],
+  },
 });
 
 opportunitySchema.statics.filterByMode = async function (mode) {
   if (!["remote", "on-site", "hybrid"].includes(mode)) {
-    throw new Error(
-      "Invalid mode. Please use 'remote', 'on-site', or 'hybrid'."
-    );
+    throw new Error("Invalid mode.");
+  }
+  return this.find({ mode: mode });
+};
+
+opportunitySchema.statics.filterByStatus = async function (mode) {
+  if (!["pending-aproval", "closed", "open"].includes(mode)) {
+    throw new Error("Invalid status.");
   }
   return this.find({ mode: mode });
 };

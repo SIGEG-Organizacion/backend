@@ -34,3 +34,4 @@ export const generateAccessToken = (payload) => {
 export const verifyToken = (token) => {
   return jwt.verify(token, process.env.JWT_SECRET);
 };
+

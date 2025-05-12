@@ -22,6 +22,16 @@ const userSchema = new mongoose.Schema({
     enum: ["student", "company", "vadminTFG", "adminLink", "graduate"],
     required: true,
   },
+  phone_number: {
+    type: String,
+    required: true,
+    unique: true,
+    match: [
+      /^\+(?:[0-9] ?){6,14}[0-9]$/,
+      "Please enter a valid email address",
+    ],
+
+  },
   resetToken: { type: String },
   resetTokenExpire: { type: Date },
 });
@@ -51,12 +61,6 @@ userSchema.pre("save", async function (next) {
 // Método para comparar contraseña en login
 userSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
-};
-
-// Método para validar email (opcional, por si se usa en lógica externa)
-userSchema.methods.validateEmailFormat = function () {
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  return emailRegex.test(this.email);
 };
 
 const User = mongoose.model("User", userSchema);

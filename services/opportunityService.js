@@ -37,3 +37,16 @@
 //       - Creating, updating, and deleting opportunities works as expected
 //       - Retrieving and filtering opportunities works correctly
 //       - Proper error handling is in place for each case
+
+
+createOpportunity(    email,
+    description,
+    requirements,
+    benefits,
+    mode,
+    deadline,
+    contact,) = async => {
+
+        
+
+}

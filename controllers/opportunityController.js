@@ -2,9 +2,9 @@ import Opportunity from "../models/opportunityModel.js";
 import Company from "../models/companyModel.js";
 import Student from "../models/studentModel.js";
 
-export const createOpportunity = async (req, res) => {
+export const createPublication = async (req, res) => {
   const {
-    companyId,
+    email,
     description,
     requirements,
     benefits,
@@ -188,6 +188,41 @@ export const filterOpportunities = async (req, res) => {
       "name sector"
     );
     res.status(200).json({ opportunities });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const createFlyer = async (req, res) => {
+  const { companyId, opportunityId, content, format } = req.body;
+
+  if (!companyId || !content || !format) {
+    return res
+      .status(400)
+      .json({ error: "companyId, content, and format are required" });
+  }
+
+  try {
+    const company = await Company.findById(companyId);
+    if (!company) {
+      return res.status(404).json({ error: "Company not found" });
+    }
+
+    if (opportunityId) {
+      const opportunity = await Opportunity.findById(opportunityId);
+      if (!opportunity) {
+        return res.status(404).json({ error: "Opportunity not found" });
+      }
+    }
+
+    const flyer = await Flyer.create({
+      companyId,
+      opportunityId,
+      content,
+      format,
+    });
+
+    res.status(201).json({ message: "Flyer created successfully", flyer });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
