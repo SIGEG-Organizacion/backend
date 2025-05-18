@@ -38,15 +38,32 @@
 //       - Retrieving and filtering opportunities works correctly
 //       - Proper error handling is in place for each case
 
+import { application } from "express";
+import { AppError } from "../utils/AppError.js";
+import { getCompanyByEmail } from "../services/companyService.js";
 
-createOpportunity(    email,
+export const createOpportunity = async (
+  email,
+  description,
+  requirements,
+  benefits,
+  mode,
+  deadline,
+  contact
+) => {
+  const company = getCompanyByEmail(email);
+  const opportunity = new Opportunity({
+    comanyId: company._id,
     description,
     requirements,
     benefits,
     mode,
     deadline,
-    contact,) = async => {
+    contact,
+    status: "pending-aproval",
+    uuid: uuidv4(),
+  });
 
-        
-
-}
+  await opportunity.save();
+  return opportunity.toObject();
+};

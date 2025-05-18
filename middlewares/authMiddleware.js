@@ -24,12 +24,13 @@
 
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
+import { AppError } from "../utils/AppError.js";
 
 export const protect = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "No token provided" });
+    throw AppError.unauthorized("Access denied: No token provided");
   }
 
   const token = authHeader.split(" ")[1];
@@ -39,16 +40,14 @@ export const protect = async (req, res, next) => {
     req.user = await User.findById(decoded.id).select("-password");
     next();
   } catch (error) {
-    return res.status(401).json({ message: "Invalid token" });
+    throw AppError.forbidden("Access denied: invalid token");
   }
 };
 
 export const authorizeRoles = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
-      return res
-        .status(403)
-        .json({ message: "Access denied: insufficient role" });
+      throw AppError.forbidden("Access denied: insufficient role");
     }
     next();
   };

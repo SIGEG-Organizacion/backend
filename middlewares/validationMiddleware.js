@@ -94,7 +94,7 @@ export const validateRegisterUser = (req, res, next) => {
     typeof role === "undefined" ||
     typeof phone_number === "undefined"
   ) {
-    throw AppError.badRequest("ValidationError: Missing required fields");
+    return AppError.badRequest("ValidationError: Missing required fields");
   }
 
   next();

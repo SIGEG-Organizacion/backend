@@ -1,8 +1,9 @@
 import Opportunity from "../models/opportunityModel.js";
 import Company from "../models/companyModel.js";
-import Student from "../models/studentModel.js";
+import { v4 as uuidv4 } from "uuid";
+import { createOpportunity } from "../services/opportunityService.js";
 
-export const createPublication = async (req, res) => {
+export const createPublication = async (req, res, next) => {
   const {
     email,
     description,
@@ -13,42 +14,21 @@ export const createPublication = async (req, res) => {
     contact,
   } = req.body;
 
-  // Validate required fields
-  if (
-    !companyId ||
-    !description ||
-    !requirements ||
-    !benefits ||
-    !mode ||
-    !deadline ||
-    !contact
-  ) {
-    return res.status(400).json({ error: "All fields are required." });
-  }
-
   try {
-    // company exists
-    const company = await Company.findById(companyId);
-    if (!company) {
-      return res.status(404).json({ error: "Company not found." });
-    }
-
-    const opportunity = new Opportunity({
-      companyId,
+    const opportunity = createOpportunity(
+      email,
       description,
       requirements,
       benefits,
       mode,
       deadline,
-      contact,
-    });
-
-    await opportunity.save();
+      contact
+    );
     res
       .status(201)
       .json({ message: "Opportunity created successfully", opportunity });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 

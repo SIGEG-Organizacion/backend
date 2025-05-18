@@ -1,33 +1,60 @@
 import express from "express";
 import {
   registerUser,
+  createCompanyUser,
+  createStudentUser,
   loginUser,
   forgotPassword,
   resetPassword,
   getCurrentUser,
 } from "../controllers/userController.js";
+import {
+  validateCreateUser,
+  validateLogin,
+  validateGenerateNewToken,
+  validateResetPassword,
+  validateCreateCompany,
+  validateCreateStudent,
+} from "../validators/usersValidator.js";
+import { validateRequest } from "../middlewares/validatorMiddleware.js"; // Your validation middleware
 import { protect, authorizeRoles } from "../middlewares/authMiddleware.js";
 import User from "../models/userModel.js";
+import { AppError } from "../utils/AppError.js";
 
 const router = express.Router();
 
-router.post("/register", registerUser);
-router.post("/login", loginUser);
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password", resetPassword);
-
+router.post("/register", validateRequest(validateCreateUser), registerUser);
+router.post(
+  "/createStudent",
+  validateRequest(validateCreateStudent),
+  createStudentUser
+);
+router.post(
+  "/createCompany",
+  validateRequest(validateCreateCompany),
+  createCompanyUser
+);
+router.post("/login", validateRequest(validateLogin), loginUser);
+router.post(
+  "/forgot-password",
+  validateRequest(validateGenerateNewToken),
+  forgotPassword
+);
+router.post(
+  "/reset-password",
+  validateRequest(validateResetPassword),
+  resetPassword
+);
 router.get("/me", protect, getCurrentUser);
-
 router.get(
   "/",
-  protect,
-  authorizeRoles("adminLink", "vadminTFG"),
+  //protect,
+  //authorizeRoles("adminLink", "vadminTFG"),
   async (req, res) => {
     const users = await User.find().select("-password");
     res.json({ users });
   }
 );
-
 router.put(
   "/:id/role",
   protect,
@@ -35,8 +62,7 @@ router.put(
   async (req, res) => {
     const { role } = req.body;
     const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ error: "User not found" });
-
+    if (!user) throw AppError.notFound("User not found");
     user.role = role;
     await user.save();
     res.json({ message: "Role updated", user });

@@ -26,11 +26,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    match: [
-      /^\+(?:[0-9] ?){6,14}[0-9]$/,
-      "Please enter a valid email address",
-    ],
-
+    match: [/^\+(?:[0-9] ?){6,14}[0-9]$/, "Please enter a valid email address"],
+  },
+  validated: {
+    type: Boolean,
+    required: true,
   },
   resetToken: { type: String },
   resetTokenExpire: { type: Date },

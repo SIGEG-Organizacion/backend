@@ -1,0 +1,172 @@
+import { body, param } from "express-validator";
+
+// Common validations
+export const emailValidation = body("email")
+  .notEmpty()
+  .isEmail()
+  .withMessage("Please provide a valid email")
+  .normalizeEmail();
+
+export const passwordValidation = body("password")
+  .notEmpty()
+  .isLength({ min: 6 })
+  .withMessage("Password must be at least 6 characters long")
+  .trim();
+
+export const phoneValidation = body("phone_number")
+  .notEmpty()
+  .matches(/^\+(?:[0-9] ?){6,14}[0-9]$/)
+  .withMessage("Please provide a valid international phone number");
+
+export const roleValidator = body("role");
+body("role")
+  .notEmpty()
+  .isIn(["student", "company", "vadminTFG", "adminLink", "graduate"])
+  .withMessage("Invalid role");
+
+export const nameValidator = body("name")
+  .notEmpty()
+  .withMessage("Name is required")
+  .matches(/^[A-Za-z\u00C0-\u017F\s'-]+$/)
+  .withMessage(
+    "Name must contain only letters, spaces, hyphens, and apostrophes"
+  )
+  .trim()
+  .escape();
+
+const validateMajor = body("major")
+  .notEmpty()
+  .isIn([
+    "ARH",
+    "AEN",
+    "MRN",
+    "DP",
+    "GPM",
+    "DCS",
+    "CND",
+    "IMT",
+    "ATI",
+    "DAI",
+    "DDE",
+    "ET",
+    "EM",
+    "EMA",
+    "AU",
+    "AE",
+    "AIT",
+    "AA",
+    "AN",
+    "BI",
+    "ME",
+    "CI",
+    "ECE",
+    "CS",
+    "SCC",
+    "CD",
+    "FI",
+    "EIC",
+    "MI",
+    "CA",
+    "CES",
+    "CO",
+    "E",
+    "EMT",
+    "PI",
+    "SHO",
+    "MA",
+    "QU",
+    "DI",
+    "IA",
+    "AG",
+    "FO",
+    "FH",
+    "GTR",
+    "GTS",
+    "GST",
+    "AAL",
+    "AMB",
+    "IB",
+    "IDC",
+    "IM",
+    "DIL",
+    "AEL",
+    "EML",
+    "LEM",
+    "IAL",
+    "AGL",
+    "COL",
+    "EL",
+    "MIL",
+    "MEL",
+    "PIL",
+    "SOL",
+    "FOL",
+    "IBL",
+    "AEM",
+    "MCS",
+    "DE",
+    "MIM",
+    "MQT",
+    "MCT",
+    "FOM",
+    "MC",
+    "DEL",
+    "MDM",
+    "ETM",
+    "ELM",
+    "MIV",
+    "MIE",
+    "SOM",
+    "PIM",
+    "MCA",
+    "PCA",
+    "PCS",
+    "SP",
+    "IF",
+    "CDC",
+    "CDD",
+    "DVE",
+  ])
+  .withMessage("Invalid major");
+
+const validateAdmissionYear = body("admissionYear")
+  .notEmpty()
+  .withMessage("Name is required")
+  .isInt({ min: 2025, max: 4000 });
+
+export const validateCreateUser = [
+  nameValidator,
+  passwordValidation,
+  phoneValidation,
+  roleValidator,
+];
+
+export const validateCreateStudent = [
+  emailValidation,
+  validateAdmissionYear,
+  validateMajor,
+];
+
+export const validateCreateCompany = [
+  body("sector").notEmpty().withMessage("Sector is required"),
+  body("address").notEmpty().withMessage("Sector is required"),
+  body("logo").notEmpty().withMessage("Logo is required"),
+];
+
+// Login validations
+export const validateLogin = [emailValidation, passwordValidation];
+
+// Generate new token validations (for password reset)
+export const validateGenerateNewToken = [emailValidation];
+
+// Reset password validations
+export const validateResetPassword = [
+  body("token").notEmpty().withMessage("Token is required"),
+
+  passwordValidation,
+];
+
+// Optional: If you have routes with token in params (like GET /reset-password/:token)
+export const validateTokenParam = [
+  param("token").notEmpty().withMessage("Token is required"),
+];

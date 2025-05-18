@@ -22,7 +22,6 @@ import mongoose from "mongoose";
 
 const companySchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Reference to 'users'
-  companyName: { type: String, required: true },
   sector: { type: String, required: true },
   address: { type: String, required: true },
   logo: { type: String }, // URL of the logo

@@ -71,35 +71,12 @@ const opportunitySchema = new mongoose.Schema({
     required: true,
     enum: ["pending-aproval", "closed", "open"],
   },
+
+  uuid: {
+    type: String,
+    required: true,
+  },
 });
-
-opportunitySchema.statics.filterByMode = async function (mode) {
-  if (!["remote", "on-site", "hybrid"].includes(mode)) {
-    throw new Error("Invalid mode.");
-  }
-  return this.find({ mode: mode });
-};
-
-opportunitySchema.statics.filterByStatus = async function (mode) {
-  if (!["pending-aproval", "closed", "open"].includes(mode)) {
-    throw new Error("Invalid status.");
-  }
-  return this.find({ mode: mode });
-};
-
-opportunitySchema.statics.listByDateRange = async function (
-  startDate,
-  endDate
-) {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-
-  if (start > end) {
-    throw new Error("Start date cannot be after end date.");
-  }
-
-  return this.find({ deadline: { $gte: start, $lte: end } });
-};
 
 const Opportunity = mongoose.model("Opportunity", opportunitySchema);
 

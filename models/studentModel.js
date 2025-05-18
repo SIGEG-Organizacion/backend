@@ -23,13 +23,6 @@ const studentSchema = new mongoose.Schema({
   admissionYear: {
     type: Number,
     required: true,
-    validate: {
-      validator: function (v) {
-        // Ensure admission year is between 1900 and the current year
-        return v >= 1900 && v <= new Date().getFullYear();
-      },
-      message: "Admission year must be between 1900 and the current year",
-    },
   },
 
   applications: [
