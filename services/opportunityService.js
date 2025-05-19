@@ -40,10 +40,13 @@
 
 import { application } from "express";
 import { AppError } from "../utils/AppError.js";
-import { getCompanyByEmail } from "../services/companyService.js";
+import Opportunity from "../models/opportunityModel.js";
+import Company from "../models/companyModel.js";
+import { v4 as uuidv4 } from "uuid";
+import User from "../models/userModel.js";
 
 export const createOpportunity = async (
-  email,
+  userId,
   description,
   requirements,
   benefits,
@@ -51,9 +54,22 @@ export const createOpportunity = async (
   deadline,
   contact
 ) => {
-  const company = getCompanyByEmail(email);
+  /*
+  const opportunityExists = Opportunity.findOne({
+    description: description,
+  });
+  */
+
+  if (opportunityExists) {
+    throw AppError.conflict("Conflict: Opportunity already exists");
+  }
+
+  const companyExists = await Company.findOne({ userId });
+  if (!companyExists) {
+    throw AppError.notFound("Not Found: Company doesnt exists");
+  }
   const opportunity = new Opportunity({
-    comanyId: company._id,
+    companyId: companyExists._id,
     description,
     requirements,
     benefits,
@@ -66,4 +82,113 @@ export const createOpportunity = async (
 
   await opportunity.save();
   return opportunity.toObject();
+};
+
+export const updateOpportunityFields = async (
+  description = false,
+  requirements = false,
+  benefits = false,
+  mode = false,
+  deadline = false,
+  contact = false,
+  status = false
+) => {
+  const opportunity = await Opportunity.findOne({ uuid });
+  if (!opportunity) {
+    throw AppError.notFound("Not Found: opportunity  doesnt exists");
+  }
+
+  // update only the provided fields
+  if (description) opportunity.description = description;
+  if (requirements) opportunity.requirements = requirements;
+  if (benefits) opportunity.benefits = benefits;
+  if (mode) opportunity.mode = mode;
+  if (deadline) opportunity.deadline = deadline;
+  if (contact) opportunity.contact = contact;
+  if (status) opportunity.status = status;
+  const updated = await opportunity.save();
+  return updated;
+};
+
+export const deleteOpportunity = async () => {
+  const opportunity = await Opportunity.findOne({ uuid });
+  if (!opportunity) {
+    throw AppError.notFound("Not Found: opportunity  doesnt exists");
+  }
+  await opportunity.deleteOne();
+};
+
+export const listOpportunities = async (company_name) => {
+  let query = {};
+  userExists = User.findOne({ name: company_name }, { id_: 1 });
+  if (!userExists) {
+    throw AppError.notFound("Not Found: user  doesnt exists");
+  }
+  const companyExists = await Company.exists({ uderId: userExists._id });
+  if (!companyExists) {
+    throw AppError.notFound("Not Found: company  doesnt exists");
+  }
+  const opportunities = await Opportunity.find(query).populate(
+    "companyId",
+    "name sector"
+  );
+  return opportunities;
+};
+
+export const getOpportunityByIdService = async (opportunityId) => {
+  const opportunity = await Opportunity.findById(opportunityId)
+    .populate("companyId", "name sector")
+    .populate("applications", "userId major admissionYear");
+  if (!opportunity) {
+    throw AppError.notFound("Opportunity not found");
+  }
+  return opportunity;
+};
+
+export const filterOpportunitiesService = async (mode, from, to, sector) => {
+  const query = {};
+  if (mode) {
+    query.mode = mode;
+  }
+  if (from || to) {
+    query.deadline = {};
+    if (from) query.deadline.$gte = new Date(from);
+    if (to) query.deadline.$lte = new Date(to);
+  }
+  if (sector) {
+    const companies = await Company.find({ sector }, "_id");
+    const companyIds = companies.map((c) => c._id);
+    query.companyId = { $in: companyIds };
+  }
+  const opportunities = await Opportunity.find(query).populate(
+    "companyId",
+    "name sector"
+  );
+
+  return opportunities;
+};
+
+export const createFlyerService = async (
+  companyId,
+  opportunityId,
+  content,
+  format
+) => {
+  const company = await Company.findById(companyId);
+  if (!company) {
+    throw AppError.notFound("Company not found");
+  }
+  if (opportunityId) {
+    const opportunity = await Opportunity.findById(opportunityId);
+    if (!opportunity) {
+      throw AppError.notFound("Opportunity not found");
+    }
+  }
+  const flyer = await Flyer.create({
+    companyId,
+    opportunityId,
+    content,
+    format,
+  });
+  return flyer;
 };

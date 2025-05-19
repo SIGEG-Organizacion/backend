@@ -36,7 +36,7 @@ export const registerUser = async (req, res, next) => {
 export const createCompanyUser = async (req, res, next) => {
   try {
     const { email, sector, address, logo } = req.body;
-    createCompany(email, sector, address, logo);
+    await createCompany(email, sector, address, logo);
     res.status(201).json({
       message: "User rol asignment successfully",
     });
@@ -48,7 +48,7 @@ export const createCompanyUser = async (req, res, next) => {
 export const createStudentUser = async (req, res, next) => {
   try {
     const { email, major, admissionYear } = req.body;
-    createStudent(email, major, admissionYear);
+    await createStudent(email, major, admissionYear);
     res.status(201).json({
       message: "User rol asignment successfully",
     });

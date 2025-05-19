@@ -1,22 +1,19 @@
 import Opportunity from "../models/opportunityModel.js";
 import Company from "../models/companyModel.js";
-import { v4 as uuidv4 } from "uuid";
-import { createOpportunity } from "../services/opportunityService.js";
+import {
+  createOpportunity,
+  listOpportunities,
+  updateOpportunityFields,
+} from "../services/opportunityService.js";
 
 export const createPublication = async (req, res, next) => {
-  const {
-    email,
-    description,
-    requirements,
-    benefits,
-    mode,
-    deadline,
-    contact,
-  } = req.body;
-
+  const { description, requirements, benefits, mode, deadline, contact } =
+    req.body;
+  const userId = req.user._id;
+  console.log(`Company id is: ${userId}`);
   try {
-    const opportunity = createOpportunity(
-      email,
+    const opportunity = await createOpportunity(
+      userId,
       description,
       requirements,
       benefits,
@@ -28,182 +25,102 @@ export const createPublication = async (req, res, next) => {
       .status(201)
       .json({ message: "Opportunity created successfully", opportunity });
   } catch (err) {
+    console.log("Error catched");
     next(err);
   }
 };
 
-export const updateOpportunity = async (req, res) => {
-  const { opportunityId } = req.params;
-  const { description, requirements, benefits, mode, deadline, contact } =
-    req.body;
-
-  if (!opportunityId) {
-    return res
-      .status(400)
-      .json({ error: "opportunityId is required in URL params" });
-  }
+export const updateOpportunity = async (req, res, next) => {
+  const { opportunityUUID } = req.params;
+  const {
+    description,
+    requirements,
+    benefits,
+    mode,
+    deadline,
+    contact,
+    status,
+  } = req.body;
 
   try {
-    const opportunity = await Opportunity.findById(opportunityId);
-    if (!opportunity) {
-      return res.status(404).json({ error: "Opportunity not found" });
-    }
-
-    // update only the provided fields
-    if (description) opportunity.description = description;
-    if (requirements) opportunity.requirements = requirements;
-    if (benefits) opportunity.benefits = benefits;
-    if (mode) opportunity.mode = mode;
-    if (deadline) opportunity.deadline = deadline;
-    if (contact) opportunity.contact = contact;
-
-    const updated = await opportunity.save();
+    const updated = await updateOpportunityFields(
+      opportunityUUID,
+      description,
+      requirements,
+      benefits,
+      mode,
+      deadline,
+      contact,
+      status
+    );
     res.status(200).json({
       message: "Opportunity updated successfully",
       opportunity: updated,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-export const deleteOpportunity = async (req, res) => {
-  const { opportunityId } = req.params;
-
-  if (!opportunityId) {
-    return res
-      .status(400)
-      .json({ error: "opportunityId is required in URL params" });
-  }
-
+export const deleteOpportunity = async (req, res, next) => {
+  const { uuid } = req.params;
   try {
-    const opportunity = await Opportunity.findById(opportunityId);
-    if (!opportunity) {
-      return res.status(404).json({ error: "Opportunity not found" });
-    }
-
-    await opportunity.deleteOne();
+    await updateOpportunity(uuid);
     res.status(200).json({ message: "Opportunity deleted successfully" });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-export const getOpportunities = async (req, res) => {
-  const { companyId } = req.query;
-
+export const getOpportunities = async (req, res, next) => {
+  const { company_name } = req.query;
   try {
-    let query = {};
-    if (companyId) {
-      query.companyId = companyId;
-      const companyExists = await Company.exists({ _id: companyId });
-      if (!companyExists) {
-        return res.status(404).json({ error: "Company not found" });
-      }
-    }
-
-    const opportunities = await Opportunity.find(query).populate(
-      "companyId",
-      "name sector"
-    );
+    const opportunities = await listOpportunities(company_name);
     res.status(200).json({ opportunities });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-export const getOpportunityById = async (req, res) => {
+export const getOpportunityById = async (req, res, next) => {
   const { opportunityId } = req.params;
 
-  if (!opportunityId) {
-    return res
-      .status(400)
-      .json({ error: "opportunityId is required in URL params" });
-  }
-
   try {
-    const opportunity = await Opportunity.findById(opportunityId)
-      .populate("companyId", "name sector")
-      .populate("applications", "userId major admissionYear");
-
-    if (!opportunity) {
-      return res.status(404).json({ error: "Opportunity not found" });
-    }
-
+    const opportunity = await getOpportunityByIdService(opportunityId);
     res.status(200).json({ opportunity });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-export const filterOpportunities = async (req, res) => {
+export const filterOpportunities = async (req, res, next) => {
   const { mode, from, to, sector } = req.query;
 
   try {
-    const query = {};
-
-    // by mode
-    if (mode) {
-      query.mode = mode;
-    }
-
-    // by deadline range
-    if (from || to) {
-      query.deadline = {};
-      if (from) query.deadline.$gte = new Date(from);
-      if (to) query.deadline.$lte = new Date(to);
-    }
-
-    // if sector is specified,
-    // match companies with that sector first
-    let companyFilter = {};
-    if (sector) {
-      const companies = await Company.find({ sector }, "_id");
-      const companyIds = companies.map((c) => c._id);
-      query.companyId = { $in: companyIds };
-    }
-
-    const opportunities = await Opportunity.find(query).populate(
-      "companyId",
-      "name sector"
+    const opportunities = await filterOpportunitiesService(
+      mode,
+      from,
+      to,
+      sector
     );
     res.status(200).json({ opportunities });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-export const createFlyer = async (req, res) => {
+export const createFlyer = async (req, res, next) => {
   const { companyId, opportunityId, content, format } = req.body;
 
-  if (!companyId || !content || !format) {
-    return res
-      .status(400)
-      .json({ error: "companyId, content, and format are required" });
-  }
-
   try {
-    const company = await Company.findById(companyId);
-    if (!company) {
-      return res.status(404).json({ error: "Company not found" });
-    }
-
-    if (opportunityId) {
-      const opportunity = await Opportunity.findById(opportunityId);
-      if (!opportunity) {
-        return res.status(404).json({ error: "Opportunity not found" });
-      }
-    }
-
-    const flyer = await Flyer.create({
+    const flyer = await createFlyerService(
       companyId,
       opportunityId,
       content,
-      format,
-    });
-
+      format
+    );
     res.status(201).json({ message: "Flyer created successfully", flyer });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };

@@ -24,11 +24,19 @@ import {
   getStudentApplications,
 } from "../controllers/studentController.js";
 import { protect, authorizeRoles } from "../middlewares/authMiddleware.js";
-import { validateApplication } from "../middlewares/validationMiddleware.js";
-
 const router = express.Router();
 
-router.post("/apply", protect, authorizeRoles("student", "graduate"), validateApplication, applyForOpportunity);
-router.get("/applications", protect, authorizeRoles("student", "graduate"), getStudentApplications);
+router.post(
+  "/apply",
+  protect,
+  authorizeRoles("student", "graduate"),
+  applyForOpportunity
+);
+router.get(
+  "/applications",
+  protect,
+  authorizeRoles("student", "graduate"),
+  getStudentApplications
+);
 
 export default router;

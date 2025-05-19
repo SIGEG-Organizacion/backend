@@ -33,23 +33,22 @@ import {
   getOpportunityById,
   filterOpportunities,
 } from "../controllers/opportunityController.js";
+import { validateRequest } from "../middlewares/validatorMiddleware.js";
+import { createOpportunityValidation } from "../validators/opportunityValidator.js";
 import { protect, authorizeRoles } from "../middlewares/authMiddleware.js";
-import { validateOpportunity } from "../middlewares/validationMiddleware.js";
-
 const router = express.Router();
 
 router.post(
   "/create",
   protect,
   authorizeRoles("company"),
-  validateOpportunity,
+  validateRequest(createOpportunityValidation),
   createPublication
 );
 router.put(
   "/update/:id",
   protect,
   authorizeRoles("company"),
-  validateOpportunity,
   updateOpportunity
 );
 router.delete(

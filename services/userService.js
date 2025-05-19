@@ -29,16 +29,19 @@ export const createUser = async (name, email, password, role, phone_number) => {
     validated: false,
   });
   const token = generateToken(user);
+  console.log(token);
   return { user, token };
 };
 
 export const createCompany = async (email, sector, address, logo) => {
   const existingUser = await User.findOne({ email });
   if (!existingUser) {
-    throw AppError.notFound("User not found");
+    throw AppError.notFound("Invalid credentials: user not found");
   }
   if (existingUser.role != "company") {
-    throw AppError.badRequest("User with innadecuate role");
+    throw AppError.badRequest(
+      "Invalid credentials: user with innadecuate role"
+    );
   }
   const company = await Company.create({
     userId: existingUser._id,
@@ -46,27 +49,31 @@ export const createCompany = async (email, sector, address, logo) => {
     address,
     logo,
   });
+  return company;
 };
 
 export const createStudent = async (email, major, admissionYear) => {
   const existingUser = await User.findOne({ email });
   if (!existingUser) {
-    throw AppError.notFound("User not found");
+    throw AppError.notFound("Invalid credentials: user not found");
   }
   if (existingUser.role != "student") {
-    throw AppError.badRequest("User with innadecuate role");
+    throw AppError.badRequest(
+      "Invalid credentials: user with innadecuate role"
+    );
   }
-  const company = await Student.create({
+  const student = await Student.create({
     userId: existingUser._id,
     major,
     admissionYear,
   });
+  return student;
 };
 
 export const login = async (email, password) => {
   const user = await User.findOne({ email });
   if (!user) {
-    throw AppError.notFound("User not found");
+    throw AppError.notFound("Invalid credentials: user not found");
   }
   const isMatch = await comparePasswords(password, user.password);
   if (!isMatch) {
@@ -109,7 +116,7 @@ const comparePasswords = async (enteredPassword, hashedPassword) => {
 
 const generateToken = (user) => {
   return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "1h",
+    expiresIn: process.env.JWT_EXPIRES_IN || "10h",
   });
 };
 

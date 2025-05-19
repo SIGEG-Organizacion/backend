@@ -16,7 +16,7 @@ import {
   validateCreateCompany,
   validateCreateStudent,
 } from "../validators/usersValidator.js";
-import { validateRequest } from "../middlewares/validatorMiddleware.js"; // Your validation middleware
+import { validateRequest } from "../middlewares/validatorMiddleware.js";
 import { protect, authorizeRoles } from "../middlewares/authMiddleware.js";
 import User from "../models/userModel.js";
 import { AppError } from "../utils/AppError.js";

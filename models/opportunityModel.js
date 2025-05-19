@@ -20,27 +20,31 @@ const opportunitySchema = new mongoose.Schema({
     },
   },
 
-  requirements: {
-    type: String,
-    required: true,
-    validate: {
-      validator: function (v) {
-        return v.trim().length > 0;
+  requirements: [
+    {
+      type: String,
+      required: true,
+      validate: {
+        validator: function (v) {
+          return v.trim().length > 0;
+        },
+        message: "Requirements cannot be empty",
       },
-      message: "Requirements cannot be empty",
     },
-  },
+  ],
 
-  benefits: {
-    type: String,
-    required: true,
-    validate: {
-      validator: function (v) {
-        return v.trim().length > 0;
+  benefits: [
+    {
+      type: String,
+      required: true,
+      validate: {
+        validator: function (v) {
+          return v.trim().length > 0;
+        },
+        message: "Benefits cannot be empty",
       },
-      message: "Benefits cannot be empty",
     },
-  },
+  ],
 
   mode: {
     type: String,
@@ -74,6 +78,7 @@ const opportunitySchema = new mongoose.Schema({
 
   uuid: {
     type: String,
+    unique: true,
     required: true,
   },
 });

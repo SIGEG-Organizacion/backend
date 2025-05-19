@@ -1,19 +1,19 @@
 import { body, param } from "express-validator";
 
 // Common validations
-export const emailValidation = body("email")
+export const emailValidator = body("email")
   .notEmpty()
   .isEmail()
   .withMessage("Please provide a valid email")
   .normalizeEmail();
 
-export const passwordValidation = body("password")
+export const passwordValidator = body("password")
   .notEmpty()
   .isLength({ min: 6 })
   .withMessage("Password must be at least 6 characters long")
   .trim();
 
-export const phoneValidation = body("phone_number")
+export const phoneValidator = body("phone_number")
   .notEmpty()
   .matches(/^\+(?:[0-9] ?){6,14}[0-9]$/)
   .withMessage("Please provide a valid international phone number");
@@ -34,7 +34,7 @@ export const nameValidator = body("name")
   .trim()
   .escape();
 
-const validateMajor = body("major")
+const majorValidator = body("major")
   .notEmpty()
   .isIn([
     "ARH",
@@ -129,22 +129,22 @@ const validateMajor = body("major")
   ])
   .withMessage("Invalid major");
 
-const validateAdmissionYear = body("admissionYear")
+const admissionYearValidator = body("admissionYear")
   .notEmpty()
   .withMessage("Name is required")
   .isInt({ min: 2025, max: 4000 });
 
 export const validateCreateUser = [
   nameValidator,
-  passwordValidation,
-  phoneValidation,
+  passwordValidator,
+  phoneValidator,
   roleValidator,
 ];
 
 export const validateCreateStudent = [
-  emailValidation,
-  validateAdmissionYear,
-  validateMajor,
+  emailValidator,
+  admissionYearValidator,
+  majorValidator,
 ];
 
 export const validateCreateCompany = [
@@ -154,16 +154,15 @@ export const validateCreateCompany = [
 ];
 
 // Login validations
-export const validateLogin = [emailValidation, passwordValidation];
+export const validateLogin = [emailValidator, passwordValidator];
 
 // Generate new token validations (for password reset)
-export const validateGenerateNewToken = [emailValidation];
+export const validateGenerateNewToken = [emailValidator];
 
 // Reset password validations
 export const validateResetPassword = [
   body("token").notEmpty().withMessage("Token is required"),
-
-  passwordValidation,
+  passwordValidator,
 ];
 
 // Optional: If you have routes with token in params (like GET /reset-password/:token)
