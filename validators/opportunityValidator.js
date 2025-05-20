@@ -1,14 +1,16 @@
-import { body } from "express-validator";
+import { body, param, query } from "express-validator";
 import { emailValidator } from "./usersValidator.js";
+import { formatValidator } from "./flyerValidator.js";
 
 // Individual validators
 const descriptionValidator = body("description")
   .trim()
-  .isLength({ min: 50 })
+  .isLength({ min: 30 })
   .withMessage("Description must be at least 50 characters long");
 
 const deadlineValidator = body("deadline")
-  .isDate()
+  .isISO8601()
+  .toDate()
   .withMessage("Deadline must be a valid date")
   .custom((value) => {
     const today = new Date();
@@ -16,6 +18,22 @@ const deadlineValidator = body("deadline")
     return deadlineDate > today;
   })
   .withMessage("Deadline must be after today");
+
+const startingRangeValidator = query("from")
+  .isISO8601()
+  .toDate()
+  .withMessage("Deadline must be a valid date")
+  .custom((value) => {
+    const validDate = new Date("2025-05-19");
+    const date = new Date(value);
+    return date >= validDate;
+  })
+  .withMessage("Start range must be valid date");
+
+const endRangeValidator = body("to")
+  .isISO8601()
+  .toDate()
+  .withMessage("Deadline must be a valid date");
 
 const requirementsValidator = body("requirements")
   .isArray({ min: 1 })
@@ -41,29 +59,38 @@ const modeValidator = body("mode")
   .isIn(["remote", "on-site", "hybrid"])
   .withMessage("Mode must be one of: remote, on-site, or hybrid");
 
-const contactValidator = body("contact")
-  .isString()
+export const uuidValidator = param("uuid")
   .trim()
-  .notEmpty()
-  .withMessage("Contact must be a non-empty string");
+  .isLength({ min: 1 })
+  .withMessage("Invalid uuid length");
 
 // Combined validators for different routes
 export const createOpportunityValidation = [
   descriptionValidator,
-  deadlineValidator,
   requirementsValidator,
   benefitsValidator,
   modeValidator,
-  contactValidator,
+  deadlineValidator,
   emailValidator,
+  formatValidator,
 ];
 
 export const updateOpportunityValidation = [
-  descriptionValidator,
-  deadlineValidator,
-  requirementsValidator,
-  benefitsValidator,
-  modeValidator,
-  contactValidator,
-  emailValidator,
+  uuidValidator,
+  descriptionValidator.optional(),
+  requirementsValidator.optional(),
+  benefitsValidator.optional(),
+  modeValidator.optional(),
+  deadlineValidator.optional(),
+  emailValidator.optional(),
+];
+
+export const filterOpportunityValidator = [
+  query("mode")
+    .isIn(["remote", "on-site", "hybrid"])
+    .withMessage("Mode must be one of: remote, on-site, or hybrid")
+    .optional(),
+  startingRangeValidator.optional(),
+  body("sector").notEmpty().withMessage("Sector is required").optional(),
+  ,
 ];

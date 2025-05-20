@@ -1,13 +1,15 @@
 import Opportunity from "../models/opportunityModel.js";
-import Company from "../models/companyModel.js";
 import {
   createOpportunity,
-  listOpportunities,
+  listOpportunitiesWithName,
   updateOpportunityFields,
+  getOpportunityService,
+  createFlyer,
+  getOpportunitiesFiltered,
 } from "../services/opportunityService.js";
 
 export const createPublication = async (req, res, next) => {
-  const { description, requirements, benefits, mode, deadline, contact } =
+  const { description, requirements, benefits, mode, deadline, email, format } =
     req.body;
   const userId = req.user._id;
   console.log(`Company id is: ${userId}`);
@@ -19,11 +21,14 @@ export const createPublication = async (req, res, next) => {
       benefits,
       mode,
       deadline,
-      contact
+      email
     );
-    res
-      .status(201)
-      .json({ message: "Opportunity created successfully", opportunity });
+    const flyer = await createFlyer(opportunity._id, format);
+    res.status(201).json({
+      message: "Opportunity created successfully",
+      opportunity,
+      flyer,
+    });
   } catch (err) {
     console.log("Error catched");
     next(err);
@@ -31,26 +36,18 @@ export const createPublication = async (req, res, next) => {
 };
 
 export const updateOpportunity = async (req, res, next) => {
-  const { opportunityUUID } = req.params;
-  const {
-    description,
-    requirements,
-    benefits,
-    mode,
-    deadline,
-    contact,
-    status,
-  } = req.body;
-
+  const { uuid } = req.params;
+  const { description, requirements, benefits, mode, deadline, email, status } =
+    req.body;
   try {
     const updated = await updateOpportunityFields(
-      opportunityUUID,
+      uuid,
       description,
       requirements,
       benefits,
       mode,
       deadline,
-      contact,
+      email,
       status
     );
     res.status(200).json({
@@ -65,28 +62,42 @@ export const updateOpportunity = async (req, res, next) => {
 export const deleteOpportunity = async (req, res, next) => {
   const { uuid } = req.params;
   try {
-    await updateOpportunity(uuid);
+    await deleteOpportunity(uuid);
     res.status(200).json({ message: "Opportunity deleted successfully" });
   } catch (err) {
     next(err);
   }
 };
 
-export const getOpportunities = async (req, res, next) => {
+export const getOpportunitiesByCompany = async (req, res, next) => {
   const { company_name } = req.query;
   try {
-    const opportunities = await listOpportunities(company_name);
+    const opportunities = await listOpportunitiesWithName(company_name);
     res.status(200).json({ opportunities });
   } catch (err) {
     next(err);
   }
 };
 
-export const getOpportunityById = async (req, res, next) => {
-  const { opportunityId } = req.params;
-
+export const getOpportunities = async (req, res, next) => {
   try {
-    const opportunity = await getOpportunityByIdService(opportunityId);
+    const opportunities = await Opportunity.find()
+      .populate({
+        path: "companyId",
+        select: "address sector -_id",
+        populate: { path: "userId", select: "name -_id" },
+      })
+      .select("-_id");
+    res.status(200).json({ opportunities });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getOpportunity = async (req, res, next) => {
+  const { uuid } = req.params;
+  try {
+    const opportunity = await getOpportunityService(uuid);
     res.status(200).json({ opportunity });
   } catch (err) {
     next(err);
@@ -95,31 +106,14 @@ export const getOpportunityById = async (req, res, next) => {
 
 export const filterOpportunities = async (req, res, next) => {
   const { mode, from, to, sector } = req.query;
-
   try {
-    const opportunities = await filterOpportunitiesService(
+    const opportunities = await getOpportunitiesFiltered(
       mode,
       from,
       to,
       sector
     );
     res.status(200).json({ opportunities });
-  } catch (err) {
-    next(err);
-  }
-};
-
-export const createFlyer = async (req, res, next) => {
-  const { companyId, opportunityId, content, format } = req.body;
-
-  try {
-    const flyer = await createFlyerService(
-      companyId,
-      opportunityId,
-      content,
-      format
-    );
-    res.status(201).json({ message: "Flyer created successfully", flyer });
   } catch (err) {
     next(err);
   }

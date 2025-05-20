@@ -6,56 +6,19 @@
 //       - Updating student profile
 //       - Viewing student profile
 
-import Student from "../models/studentModel.js";
-import Opportunity from "../models/opportunityModel.js";
+import User from "../models/userModel.js";
+import Interest from "../models/interestModel.js";
 
-export const applyForOpportunity = async (req, res) => {
-  const { studentId, opportunityId } = req.body;
-  // Validate request data
-  if (!studentId || !opportunityId) {
-    return res
-      .status(400)
-      .json({ error: "studentId and opportunityId are required" });
-  }
+export const getStudentApplications = async (req, res, next) => {
+  const { email } = req.params;
   try {
-    // Check if student exists
-    const student = await Student.findById(studentId);
-    if (!student) {
-      return res.status(404).json({ error: "Student not found" });
-    }
-    // Check if opportunity exists
-    const opportunity = await Opportunity.findById(opportunityId);
-    if (!opportunity) {
-      return res.status(404).json({ error: "Opportunity not found" });
-    }
-    // Add student to opportunity applications if not already applied
-    if (opportunity.applications.includes(studentId)) {
-      return res
-        .status(409)
-        .json({ error: "Student has already applied to this opportunity" });
-    }
-    opportunity.applications.push(studentId);
-    await opportunity.save();
-    res.status(200).json({ message: "Application submitted successfully" });
+    const userId = User.findOne({ email }).select("_id")?._id;
+    if (!userId) throw AppError.notFound("Invalid request: not found");
+    const interests = await Interest.find({ userId })
+      .populate("opportunityId")
+      .select("-_id -_companyId");
+    res.status(200).json({ applications: interests });
   } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-export const getStudentApplications = async (req, res) => {
-  const { studentId } = req.params;
-  if (!studentId) {
-    return res.status(400).json({ error: "studentId is required" });
-  }
-
-  try {
-    const student = await Student.findById(studentId).populate("applications");
-    if (!student) {
-      return res.status(404).json({ error: "Student not found" });
-    }
-
-    res.status(200).json({ applications: student.applications });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };

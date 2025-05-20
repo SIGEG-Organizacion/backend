@@ -24,13 +24,6 @@ const studentSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-
-  applications: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Opportunity",
-    },
-  ],
 });
 
 studentSchema.methods.populateApplications = async function () {

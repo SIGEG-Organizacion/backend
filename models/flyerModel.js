@@ -1,15 +1,22 @@
 // models/flyerModel.js
 import mongoose from "mongoose";
-
 const flyerSchema = new mongoose.Schema({
-  companyId: {
+  opportunityId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Company",
+    ref: "Oportunity",
     required: true,
   }, // Reference to 'companies'
-  content: { type: String, required: true },
-  status: { type: String, required: true }, // "active", "inactive"
-  format: { type: String, required: true }, // "PDF", "Image", etc.
+  content: { type: String },
+  status: {
+    type: String,
+    enum: ["active", "inactive"],
+    required: true,
+  }, // "active", "inactive"
+  format: {
+    type: String,
+    required: true,
+    enum: ["PDF", "JPG"],
+  }, // "PDF", "Image", etc.
 });
 
 const Flyer = mongoose.model("Flyer", flyerSchema);

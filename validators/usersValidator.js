@@ -149,7 +149,7 @@ export const validateCreateStudent = [
 
 export const validateCreateCompany = [
   body("sector").notEmpty().withMessage("Sector is required"),
-  body("address").notEmpty().withMessage("Sector is required"),
+  body("address").notEmpty().withMessage("Adress is required"),
   body("logo").notEmpty().withMessage("Logo is required"),
 ];
 

@@ -19,23 +19,24 @@
 //       - Proper responses and status codes are returned on success/failure
 
 import express from "express";
-import {
-  applyForOpportunity,
-  getStudentApplications,
-} from "../controllers/studentController.js";
+import { getStudentApplications } from "../controllers/studentController.js";
 import { protect, authorizeRoles } from "../middlewares/authMiddleware.js";
+import { validateRequest } from "../middlewares/validatorMiddleware.js";
+import { param } from "express-validator";
+
 const router = express.Router();
 
-router.post(
-  "/apply",
-  protect,
-  authorizeRoles("student", "graduate"),
-  applyForOpportunity
-);
 router.get(
   "/applications",
   protect,
   authorizeRoles("student", "graduate"),
+  validateRequest([
+    param("email")
+      .notEmpty()
+      .isEmail()
+      .withMessage("Please provide a valid email")
+      .normalizeEmail(),
+  ]),
   getStudentApplications
 );
 

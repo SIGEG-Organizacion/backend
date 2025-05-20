@@ -12,6 +12,7 @@ const opportunitySchema = new mongoose.Schema({
   description: {
     type: String,
     required: true,
+    unique: true,
     validate: {
       validator: function (v) {
         return v.trim().length > 0;
