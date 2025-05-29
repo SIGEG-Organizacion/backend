@@ -1,0 +1,12 @@
+MONGO_URI=mongodb+srv://emarodriguez:E0KbpRsMyt4jTRTH@sigev-db.trbyr5w.mongodb.net/?retryWrites=true&w=majority&appName=SIGEV-DB
+CLIENT_URL= http://localhost:5000
+PORT= 5000
+JWT_SECRET= 1bf88888e9af5ec16068659305503ca38f40a8ecd97acfa9ea2a304f63921f60
+EMAIL_FROM= example123@gmail.com
+EMAIL_PASS= 12345
+JWT_EXPIRES_IN= 150h
+NODE_END=development
+B2_KEY_ID=tec-backend-key
+B2_APPLICATION_KEY=K003NgzfF0vTBSvxMjjB/X4lfaYCFSE
+B2_BUCKET_NAME=tec-flyers
+B2_ENDPOINT=https://s3.eu-central-003.backblazeb2.com

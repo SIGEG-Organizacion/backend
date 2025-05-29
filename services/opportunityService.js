@@ -44,6 +44,10 @@ import Company from "../models/companyModel.js";
 import { v4 as uuidv4 } from "uuid";
 import User from "../models/userModel.js";
 import Flyer from "../models/flyerModel.js";
+import { generateFlyerPDF } from "../utils/flyerGenerator.js";
+import { uploadFileToB2 } from "../utils/b2Uploader.js";
+import path from "path";
+import fs from "fs";
 
 export const createOpportunity = async (
   userId,
@@ -180,14 +184,49 @@ export const getOpportunitiesFiltered = async (mode, from, to, sector) => {
 };
 
 export const createFlyer = async (opportunityId, format) => {
-  const opportunity = await Opportunity.findById(opportunityId);
+  const opportunity = await Opportunity.findById(opportunityId).populate({
+    path: "companyId",
+  });
+
   if (!opportunity) {
     throw AppError.notFound("Opportunity not found");
   }
-  const flyer = await Flyer.create({
-    opportunityId,
-    status: "inactive",
-    format,
-  });
-  return flyer;
+
+  // 1. Generar PDF local
+  const outputPath = path.resolve(`./temp/flyer_${opportunity.uuid}.pdf`);
+
+  // Asegurarse de que la carpeta temp exista
+  if (!fs.existsSync(path.resolve("./temp"))) {
+    fs.mkdirSync(path.resolve("./temp"));
+  }
+
+  await generateFlyerPDF(opportunity, opportunity.companyId.logoUrl, outputPath);
+
+  // 2. Subir PDF a Backblaze B2 y obtener URL firmada
+  const fileName = `flyers/flyer_${opportunity.uuid}.pdf`;
+  const signedUrl = await uploadFileToB2(outputPath, fileName);
+
+  // 3. Guardar la URL firmada en el modelo Flyer
+  let flyer = await Flyer.findOne({ opportunityId });
+  if (!flyer) {
+    flyer = new Flyer({
+      opportunityId,
+      status: "active",
+      format,
+      url: signedUrl, // Guardamos la URL firmada en lugar de la pública
+      content: opportunity.description,
+    });
+  } else {
+    flyer.url = signedUrl; // Actualizamos la URL firmada
+    flyer.status = "active";
+  }
+
+  await flyer.save();
+
+  // 4. Limpiar archivo local
+  fs.unlinkSync(outputPath);
+
+  return flyer.toObject();
 };
+
+
