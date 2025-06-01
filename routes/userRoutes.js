@@ -35,6 +35,7 @@ router.post(
   createCompanyUser
 );
 router.post("/login", validateRequest(validateLogin), loginUser);
+
 router.post(
   "/forgot-password",
   validateRequest(validateGenerateNewToken),
