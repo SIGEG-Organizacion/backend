@@ -10,6 +10,7 @@ import { uploadFileToB2 } from "../utils/b2Uploader.js";
 import path from "path";
 import fs from "fs";
 
+
 export const createOpportunity = async (
   userId,
   description,
@@ -144,11 +145,8 @@ export const getOpportunitiesFiltered = async (mode, from, to, sector) => {
   return opportunities;
 };
 
-import { generateFlyerPDF } from "../utils/flyerGenerator.js";
-import { uploadFileToB2 } from "../utils/b2Uploader.js";
-import path from "path";
-import fs from "fs";
-import Flyer from "../models/flyerModel.js";
+
+
 
 export const createFlyer = async (opportunityId, format) => {
   // Obtener la oportunidad desde la base de datos

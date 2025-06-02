@@ -7,7 +7,7 @@ const opportunitySchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Company",
     required: true,
-  }, // Reference to 'companies'
+  },
 
   description: {
     type: String,
@@ -63,7 +63,6 @@ const opportunitySchema = new mongoose.Schema({
     required: true,
     validate: {
       validator: function (v) {
-        // Simple email validation (can be extended for phone numbers or other formats)
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         return emailRegex.test(v);
       },
@@ -81,6 +80,12 @@ const opportunitySchema = new mongoose.Schema({
     type: String,
     unique: true,
     required: true,
+  },
+
+  // Nuevo campo para guardar la URL del flyer
+  flyerUrl: {
+    type: String,
+    required: false, // No obligatorio, solo se llena después de generar el flyer
   },
 });
 

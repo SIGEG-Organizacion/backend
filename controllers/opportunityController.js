@@ -9,28 +9,21 @@ import {
 } from "../services/opportunityService.js";
 
 export const createPublication = async (req, res, next) => {
-  const { description, requirements, benefits, mode, deadline, email, format } =
-    req.body;
+  const { description, requirements, benefits, mode, deadline, email, format } = req.body;
   const userId = req.user._id;
-  console.log(`Company id is: ${userId}`);
   try {
-    const opportunity = await createOpportunity(
-      userId,
-      description,
-      requirements,
-      benefits,
-      mode,
-      deadline,
-      email
-    );
-    const flyer = await createFlyer(opportunity._id, format);
+    const opportunity = await createOpportunity(userId, description, requirements, benefits, mode, deadline, email);
+    // Crear el flyer para la oportunidad y subirlo a Backblaze B2
+    const flyer = await createFlyer(opportunity._id, format); 
+    opportunity.flyerUrl = flyer.url;
+    await opportunity.save();
+
     res.status(201).json({
       message: "Opportunity created successfully",
       opportunity,
       flyer,
     });
   } catch (err) {
-    console.log("Error catched");
     next(err);
   }
 };
