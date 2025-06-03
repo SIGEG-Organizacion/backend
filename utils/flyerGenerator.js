@@ -33,6 +33,8 @@ export const generateFlyerPDF = (opportunity, companyLogoUrl, outputPath) => {
     writeStream.on("finish", () => {
       resolve(outputPath);
     });
-    writeStream.on("error", (err) => reject(err));
+    writeStream.on("error", (err) => {
+      reject(err);
+    });
   });
 };

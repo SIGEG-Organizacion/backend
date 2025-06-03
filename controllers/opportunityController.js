@@ -9,8 +9,10 @@ import {
 } from "../services/opportunityService.js";
 
 export const createPublication = async (req, res, next) => {
-  const { description, requirements, benefits, mode, deadline, email, format } = req.body;
+  const { description, requirements, benefits, mode, deadline, email, format } =
+    req.body;
   const userId = req.user._id;
+  let createdOpportunityId = null;
   try {
     const opportunity = await createOpportunity(
       userId,
@@ -21,18 +23,20 @@ export const createPublication = async (req, res, next) => {
       deadline,
       email
     );
+
+    createdOpportunityId = opportunity._id;
     // Crear flyer, subir a Backblaze B2 y obtener URL
     const flyer = await createFlyer(opportunity._id, format);
     // Guardar la URL del flyer en el documento mongoose
-    opportunity.flyerUrl = flyer.url;
+    opportunity.flyerUrl = "https://www.google.com";
     await opportunity.save();
-
     res.status(201).json({
       message: "Opportunity created successfully",
       opportunity,
       flyer,
     });
   } catch (err) {
+    await Opportunity.findByIdAndDelete(createdOpportunityId);
     next(err);
   }
 };

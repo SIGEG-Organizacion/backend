@@ -10,7 +10,6 @@ import { uploadFileToB2 } from "../utils/b2Uploader.js";
 import path from "path";
 import fs from "fs";
 
-
 export const createOpportunity = async (
   userId,
   description,
@@ -38,10 +37,9 @@ export const createOpportunity = async (
     mode,
     deadline: new Date(deadline),
     contact,
-    status: "pending-aproval",
+    status: "pending-approval",
     uuid: uuidv4(),
   });
-
   await opportunity.save();
   return opportunity;
 };
@@ -145,9 +143,6 @@ export const getOpportunitiesFiltered = async (mode, from, to, sector) => {
   return opportunities;
 };
 
-
-
-
 export const createFlyer = async (opportunityId, format) => {
   // Obtener la oportunidad desde la base de datos
   const opportunity = await Opportunity.findById(opportunityId).populate({
@@ -166,12 +161,16 @@ export const createFlyer = async (opportunityId, format) => {
     fs.mkdirSync(path.resolve("./temp"));
   }
 
-  // Generar el PDF 
-  await generateFlyerPDF(opportunity, opportunity.companyId.logoUrl, outputPath);
+  // Generar el PDF
+  await generateFlyerPDF(
+    opportunity,
+    opportunity.companyId.logoUrl,
+    outputPath
+  );
 
   // Subir el archivo a Backblaze B2 y obtener la URL firmada
-  const fileName = `flyers/flyer_${opportunity.uuid}.pdf`; 
-  const signedUrl = await uploadFileToB2(outputPath, fileName); 
+  const fileName = `flyers/flyer_${opportunity.uuid}.pdf`;
+  const signedUrl = await uploadFileToB2(outputPath, fileName);
 
   // Crear o actualizar el documento de flyer en MongoDB
   let flyer = await Flyer.findOne({ opportunityId });
@@ -196,6 +195,3 @@ export const createFlyer = async (opportunityId, format) => {
 
   return flyer.toObject(); // Retorna el flyer creado/actualizado
 };
-
-
-

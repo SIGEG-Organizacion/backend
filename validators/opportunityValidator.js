@@ -64,6 +64,13 @@ export const uuidValidator = param("uuid")
   .isLength({ min: 1 })
   .withMessage("Invalid uuid length");
 
+  
+
+export const uuidValidatorBody = body("uuid")
+  .trim()
+  .isLength({ min: 1 })
+  .withMessage("Invalid uuid length");
+
 // Combined validators for different routes
 export const createOpportunityValidation = [
   descriptionValidator,

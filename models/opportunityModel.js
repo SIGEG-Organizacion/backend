@@ -9,6 +9,16 @@ const opportunitySchema = new mongoose.Schema({
     required: true,
   },
 
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+
+  deadline: {
+    type: Date,
+    required: true,
+  },
+
   description: {
     type: String,
     required: true,
@@ -53,11 +63,6 @@ const opportunitySchema = new mongoose.Schema({
     enum: ["remote", "on-site", "hybrid"],
   },
 
-  deadline: {
-    type: Date,
-    required: true,
-  },
-
   contact: {
     type: String,
     required: true,
@@ -73,7 +78,7 @@ const opportunitySchema = new mongoose.Schema({
   status: {
     type: String,
     required: true,
-    enum: ["pending-aproval", "closed", "open"],
+    enum: ["pending-approval", "closed", "open"],
   },
 
   uuid: {

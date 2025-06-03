@@ -30,17 +30,19 @@ export const protect = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    throw AppError.unauthorized("Access denied: No token provided");
+    throw AppError.unauthorized("Access denied");
   }
 
   const token = authHeader.split(" ")[1];
-
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = await User.findById(decoded.id).select("-password");
+    if (!req.user.validated) {
+      throw AppError.forbidden("Access denied 2");
+    }
     next();
   } catch (error) {
-    throw AppError.forbidden("Access denied: invalid token");
+    throw AppError.forbidden("Access denied 3");
   }
 };
 
