@@ -43,7 +43,7 @@ export const createOpportunity = async (
   });
 
   await opportunity.save();
-  return opportunity.toObject();
+  return opportunity;
 };
 
 export const updateOpportunityFields = async (
