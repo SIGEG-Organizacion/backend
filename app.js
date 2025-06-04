@@ -9,6 +9,7 @@ import opportunityRoutes from "./routes/opportunityRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import interestRoutes from "./routes/interestRoutes.js";
 import reporRoutes from "./routes/reportRoutes.js";
+import startOpportunityCleanupJob from "./utils/opportunityCleaner.js";
 
 // To-Do List for /app.js
 // ======================
@@ -58,6 +59,8 @@ app.use(morgan("dev"));
 
 // Database connection
 connectDB();
+
+startOpportunityCleanupJob();
 
 // Routes
 app.use("/api/users", userRoutes);

@@ -3,7 +3,7 @@ import { reportOpportunitiesNumbers } from "../services/reportService.js";
 
 export const generateReportOpportunitiesNumbers = async (req, res, next) => {
   const { startDate, endDate, companyName, groupBy } = req.query; // 'day', 'month', or undefined for no  } =
-  const forStudents = req.user.role === "vadmintTFG" ? true : false;
+  const forStudents = req.user.role === "vadminTFG" ? true : false;
   try {
     const report = await reportOpportunitiesNumbers(
       startDate,
