@@ -20,6 +20,13 @@ import { validateRequest } from "../middlewares/validatorMiddleware.js";
 import { protect, authorizeRoles } from "../middlewares/authMiddleware.js";
 import User from "../models/userModel.js";
 import { AppError } from "../utils/AppError.js";
+import rateLimit from "express-rate-limit";
+
+const apiLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 15 minutes
+  max: 10,
+  message: "Too many requests from this IP",
+});
 
 const router = express.Router();
 
@@ -37,6 +44,7 @@ router.post(
 router.post("/login", validateRequest(validateLogin), loginUser);
 router.post(
   "/forgot-password",
+  apiLimiter,
   validateRequest(validateGenerateNewToken),
   forgotPassword
 );
