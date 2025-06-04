@@ -64,12 +64,14 @@ export const uuidValidator = param("uuid")
   .isLength({ min: 1 })
   .withMessage("Invalid uuid length");
 
-  
-
 export const uuidValidatorBody = body("uuid")
   .trim()
   .isLength({ min: 1 })
   .withMessage("Invalid uuid length");
+
+export const forStudentsValidator = body("forStudents")
+  .isBoolean()
+  .withMessage("Invalid boolean value");
 
 // Combined validators for different routes
 export const createOpportunityValidation = [
@@ -80,6 +82,7 @@ export const createOpportunityValidation = [
   deadlineValidator,
   emailValidator,
   formatValidator,
+  forStudentsValidator,
 ];
 
 export const updateOpportunityValidation = [
@@ -90,6 +93,7 @@ export const updateOpportunityValidation = [
   modeValidator.optional(),
   deadlineValidator.optional(),
   emailValidator.optional(),
+  forStudentsValidator,
 ];
 
 export const filterOpportunityValidator = [

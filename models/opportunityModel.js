@@ -92,6 +92,11 @@ const opportunitySchema = new mongoose.Schema({
     type: String,
     required: false, // No obligatorio, solo se llena después de generar el flyer
   },
+
+  forStudents: {
+    type: Boolean,
+    required: true,
+  },
 });
 
 const Opportunity = mongoose.model("Opportunity", opportunitySchema);

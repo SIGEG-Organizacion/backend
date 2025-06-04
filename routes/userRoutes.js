@@ -46,15 +46,10 @@ router.post(
   resetPassword
 );
 router.get("/me", protect, getCurrentUser);
-router.get(
-  "/",
-  //protect,
-  //authorizeRoles("adminLink", "vadminTFG"),
-  async (req, res) => {
-    const users = await User.find().select("-password");
-    res.json({ users });
-  }
-);
+router.get("/", async (req, res) => {
+  const users = await User.find().select("-password");
+  res.json({ users });
+});
 router.put(
   "/:id/role",
   protect,

@@ -1,28 +1,136 @@
-// To-Do List for /services/reportService.js
-// ========================================
-//
-// [ ] 1. Import necessary modules:
-//       - Report model (from '../models/reportModel.js')
-//       - Any other necessary models (e.g., User, Opportunity, etc.)
-// [ ] 2. Create a function to generate a report:
-//       - Accept report type and required parameters (e.g., "student applications", "company activities")
-//       - Fetch and aggregate the necessary data based on the report type
-//       - Format the data (e.g., count of applications, details about opportunities, etc.)
-//       - Create a new report document and save it to the database
-//       - Return the generated report details
-// [ ] 3. Create a function to retrieve reports:
-//       - Retrieve all reports from the database
-//       - Optionally, filter reports by type, date range, or other parameters
-//       - Return the list of reports
-// [ ] 4. Create a function to generate a summary report:
-//       - Generate a summary of key platform metrics (e.g., total number of students, active opportunities, etc.)
-//       - Return the summary data
-// [ ] 5. Add error handling for:
-//       - Missing or invalid parameters (e.g., invalid report type)
-//       - Report generation errors (e.g., failure to aggregate data)
-//       - Database errors (e.g., failure to save or retrieve reports)
-// [ ] 6. Test the functions to ensure:
-//       - Report generation works correctly for all report types
-//       - Retrieving reports works as expected, with filtering options
-//       - Summary reports generate and return accurate data
-//       - Proper error handling is in place for missing or invalid data
+import Company from "../models/companyModel.js";
+import Opportunity from "../models/opportunityModel.js";
+import Report from "../models/reportModel.js";
+import User from "../models/userModel.js";
+import { AppError } from "../utils/AppError.js";
+
+const filterByCompany = async (filter, companyName) => {
+  if (!companyName) return filter;
+
+  const user = await User.findOne({ name: companyName });
+  if (!user) throw AppError.notFound("Company not found");
+
+  const company = await Company.findOne({ userId: user._id });
+  if (!company) throw AppError.notFound("Company record not found");
+
+  return { ...filter, companyId: company._id };
+};
+
+const filterByDateRange = (filter, startDate, endDate) => {
+  if (!startDate && !endDate) return filter;
+
+  const dateFilter = {};
+  if (startDate) dateFilter.$gte = new Date(startDate);
+  if (endDate) dateFilter.$lte = new Date(endDate);
+
+  return { ...filter, createdAt: dateFilter };
+};
+
+const filterByStudentStatus = (filter, forStudents) => {
+  if (forStudents === undefined) return filter;
+  return { ...filter, forStudents };
+};
+
+const groupByTimePeriod = async (filter, groupBy) => {
+  if (!groupBy) {
+    const count = await Opportunity.countDocuments(filter);
+    return { total: count };
+  }
+
+  const aggregationPipeline = [];
+
+  if (Object.keys(filter).length > 0) {
+    aggregationPipeline.push({ $match: filter });
+  }
+
+  const groupFormat = {
+    _id: {
+      year: { $year: "$createdAt" },
+      month: { $month: "$createdAt" },
+      ...(groupBy === "day" && { day: { $dayOfMonth: "$createdAt" } }),
+    },
+    count: { $sum: 1 },
+  };
+
+  aggregationPipeline.push({ $group: groupFormat });
+
+  const sortCriteria = {
+    "_id.year": 1,
+    "_id.month": 1,
+    ...(groupBy === "day" && { "_id.day": 1 }),
+  };
+  aggregationPipeline.push({ $sort: sortCriteria });
+
+  aggregationPipeline.push({
+    $project: {
+      _id: 0,
+      date: {
+        $dateToString: {
+          format: groupBy === "day" ? "%Y-%m-%d" : "%Y-%m",
+          date: {
+            $dateFromParts: {
+              year: "$_id.year",
+              month: "$_id.month",
+              ...(groupBy === "day" && { day: "$_id.day" }),
+            },
+          },
+        },
+      },
+      count: 1,
+    },
+  });
+
+  const results = await Opportunity.aggregate(aggregationPipeline);
+  return {
+    groupBy,
+    dataPoints: results,
+    total: results.reduce((sum, item) => sum + item.count, 0),
+  };
+};
+
+export const reportOpportunitiesNumbers = async (
+  startDate,
+  endDate,
+  companyName,
+  forStudents,
+  groupBy
+) => {
+  try {
+    console.log("Starting report generation...");
+
+    let filter = {};
+    //company filter
+    filter = await filterByCompany(filter, companyName);
+
+    //  date range filter
+    filter = filterByDateRange(filter, startDate, endDate);
+
+    // student status filter
+    filter = filterByStudentStatus(filter, forStudents);
+
+    //  Group data
+    const groupedData = await groupByTimePeriod(filter, groupBy);
+
+    const report = new Report({
+      type: "opportunity-numbers",
+      data: {
+        ...groupedData,
+        filters: {
+          companyName,
+          startDate,
+          endDate,
+          forStudents,
+        },
+      },
+      generationDate: new Date(),
+    });
+
+    await report.save();
+    console.log("Report saved successfully");
+
+    return report;
+  } catch (error) {
+    console.error("Error generating report:", error);
+    throw error;
+  }
+};

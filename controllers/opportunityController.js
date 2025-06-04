@@ -9,8 +9,16 @@ import {
 } from "../services/opportunityService.js";
 
 export const createPublication = async (req, res, next) => {
-  const { description, requirements, benefits, mode, deadline, email, format } =
-    req.body;
+  const {
+    description,
+    requirements,
+    benefits,
+    mode,
+    deadline,
+    email,
+    format,
+    forStudents,
+  } = req.body;
   const userId = req.user._id;
   let createdOpportunityId = null;
   try {
@@ -21,7 +29,8 @@ export const createPublication = async (req, res, next) => {
       benefits,
       mode,
       deadline,
-      email
+      email,
+      forStudents
     );
 
     createdOpportunityId = opportunity._id;
@@ -43,8 +52,16 @@ export const createPublication = async (req, res, next) => {
 
 export const updateOpportunity = async (req, res, next) => {
   const { uuid } = req.params;
-  const { description, requirements, benefits, mode, deadline, email, status } =
-    req.body;
+  const {
+    description,
+    requirements,
+    benefits,
+    mode,
+    deadline,
+    email,
+    status,
+    forStudents,
+  } = req.body;
   try {
     const updated = await updateOpportunityFields(
       uuid,
@@ -54,7 +71,8 @@ export const updateOpportunity = async (req, res, next) => {
       mode,
       deadline,
       email,
-      status
+      status,
+      forStudents
     );
     res.status(200).json({
       message: "Opportunity updated successfully",

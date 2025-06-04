@@ -28,7 +28,6 @@ import { AppError } from "../utils/AppError.js";
 
 export const protect = async (req, res, next) => {
   const authHeader = req.headers.authorization;
-
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     throw AppError.unauthorized("Access denied");
   }
@@ -38,9 +37,10 @@ export const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = await User.findById(decoded.id).select("-password");
     if (!req.user.validated) {
-      throw AppError.forbidden("Access denied 2");
+      next(AppError.forbidden("Access denied 4"));
+    } else {
+      next();
     }
-    next();
   } catch (error) {
     throw AppError.forbidden("Access denied 3");
   }

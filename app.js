@@ -8,6 +8,7 @@ import userRoutes from "./routes/userRoutes.js";
 import opportunityRoutes from "./routes/opportunityRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import interestRoutes from "./routes/interestRoutes.js";
+import reporRoutes from "./routes/reportRoutes.js";
 
 // To-Do List for /app.js
 // ======================
@@ -63,6 +64,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/opportunities", opportunityRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/interests", interestRoutes);
+app.use("/api/reports", reporRoutes);
 
 // Root route
 app.get("/", (req, res) => {
