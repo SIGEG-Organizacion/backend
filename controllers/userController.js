@@ -5,6 +5,8 @@ import {
   createCompany,
   createStudent,
 } from "../services/userService.js";
+import { uploadLogo } from "../middlewares/fileUpload.js"; 
+import { uploadLogoToB2 } from "../utils/b2Uploader.js"; 
 
 // Register a new user
 export const registerUser = async (req, res, next) => {
@@ -34,15 +36,30 @@ export const registerUser = async (req, res, next) => {
 };
 
 export const createCompanyUser = async (req, res, next) => {
-  try {
-    const { email, sector, address, logo } = req.body;
-    await createCompany(email, sector, address, logo);
-    res.status(201).json({
-      message: "User rol asignment successfully",
-    });
-  } catch (err) {
-    next(err);
-  }
+  //middleware uploadLogo para procesar el archivo
+  uploadLogo(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ message: "Error uploading logo", error: err });
+    }
+
+    // Desestructurar los datos del formulario
+    const { email, sector, address } = req.body;
+    const logoFile = req.file;  // El archivo del logo es manejado por multer
+
+    try {
+      // Subir el logo a Backblaze B2 y obtener la URL
+      const logoUrl = await uploadLogoToB2(logoFile.path, `logos/${logoFile.filename}`);
+
+      // Crear la compañía con la URL del logo
+      await createCompany(email, sector, address, logoUrl);
+
+      res.status(201).json({
+        message: "User role assignment and company creation successful",
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
 };
 
 export const createStudentUser = async (req, res, next) => {
