@@ -37,7 +37,7 @@ export const createPublication = async (req, res, next) => {
     // Crear flyer, subir a Backblaze B2 y obtener URL
     const flyer = await createFlyer(opportunity._id, format);
     // Guardar la URL del flyer en el documento mongoose
-    opportunity.flyerUrl = "https://www.google.com";
+    opportunity.flyerUrl = flyer.url;
     await opportunity.save();
     res.status(201).json({
       message: "Opportunity created successfully",
