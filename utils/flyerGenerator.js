@@ -28,6 +28,14 @@ export const generateFlyerPDF = (opportunity, companyLogoUrl, outputPath) => {
     doc.text(`Fecha límite: ${opportunity.deadline.toDateString()}`);
     doc.text(`Contacto: ${opportunity.contact}`);
 
+    // Agregar el logo al flyer
+    doc.image(logoUrl, 50, 50, { width: 100, height: 100 }); // Ajusta la posición y tamaño
+
+    doc.fontSize(12).text(`Description: ${opportunity.description}`, 50, 200);
+    doc.text(`Requirements: ${opportunity.requirements.join(", ")}`, 50, 220);
+    doc.text(`Benefits: ${opportunity.benefits.join(", ")}`, 50, 240);
+    doc.text(`Deadline: ${opportunity.deadline}`, 50, 260);
+
     doc.end();
 
     writeStream.on("finish", () => {
