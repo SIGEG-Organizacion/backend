@@ -5,7 +5,7 @@ import {
   createCompany,
   createStudent,
 } from "../services/userService.js";
-import { uploadLogo } from "../middlewares/fileUpload.js"; 
+import { upload } from "../middlewares/fileUpload.js"; 
 import { uploadLogoToB2 } from "../utils/b2Uploader.js"; 
 
 // Register a new user
@@ -36,30 +36,28 @@ export const registerUser = async (req, res, next) => {
 };
 
 export const createCompanyUser = async (req, res, next) => {
-  //middleware uploadLogo para procesar el archivo
-  uploadLogo(req, res, async (err) => {
-    if (err) {
-      return res.status(400).json({ message: "Error uploading logo", error: err });
-    }
+  console.log(req.files);
+  console.log("Datos del cuerpo de la solicitud:", req.body);
 
-    // Desestructurar los datos del formulario
-    const { email, sector, address } = req.body;
-    const logoFile = req.file;  // El archivo del logo es manejado por multer
+  if (!req.files || !req.files.logo) {
+    return res.status(400).json({ message: "Logo is required" });
+  }
+  const { email, sector, address } = req.body;
+  const logoFile = req.files.logo;  // El archivo del logo
 
-    try {
-      // Subir el logo a Backblaze B2 y obtener la URL
-      const logoUrl = await uploadLogoToB2(logoFile.path, `logos/${logoFile.filename}`);
+  try {
+    // Subir el logo a Backblaze B2 y obtener la URL
+    const logoUrl = await uploadLogoToB2(logoFile.tempFilePath, `logos/${logoFile.name}`);
 
-      // Crear la compañía con la URL del logo
-      await createCompany(email, sector, address, logoUrl);
+    // Crear la compañía con la URL del logo
+    await createCompany(email, sector, address, logoUrl);
 
-      res.status(201).json({
-        message: "User role assignment and company creation successful",
-      });
-    } catch (err) {
-      next(err);
-    }
-  });
+    res.status(201).json({
+      message: "User role assignment and company creation successful",
+    });
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const createStudentUser = async (req, res, next) => {
