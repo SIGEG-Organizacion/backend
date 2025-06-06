@@ -9,32 +9,34 @@ export const generateFlyerPDF = (opportunity, companyLogoUrl, outputPath) => {
     const writeStream = fs.createWriteStream(outputPath);
     doc.pipe(writeStream);
 
-    doc.fontSize(20).text("Flyer de Oportunidad TEC", { align: "center" });
+    doc.fontSize(20).text("¡Nueva Oportunidad!", { align: "center" });
 
     doc.moveDown();
 
-    doc.fontSize(14).text(`Descripción: ${opportunity.description}`);
-    doc.text(`Requisitos:`);
-    opportunity.requirements.forEach((req, i) => {
-      doc.text(`${i + 1}. ${req}`);
+    doc.fontSize(16).font('Helvetica-Bold').text('Descripción:', { align: 'center' });
+    doc.fontSize(14).font('Helvetica').text(opportunity.description, { align: 'center' });
+    doc.moveDown();
+
+    doc.fontSize(16).font('Helvetica-Bold').text('Requisitos:', { align: 'center' });
+    opportunity.requirements.forEach(req => {
+    doc.fontSize(14).font('Helvetica').text(`- ${req}`, { align: 'center' });
     });
+    doc.moveDown();
 
-    doc.text(`Beneficios:`);
-    opportunity.benefits.forEach((ben, i) => {
-      doc.text(`${i + 1}. ${ben}`);
+    doc.fontSize(16).font('Helvetica-Bold').text('Beneficios:', { align: 'center' });
+    opportunity.benefits.forEach(benefit => {
+    doc.fontSize(14).font('Helvetica').text(`- ${benefit}`, { align: 'center' });
     });
+    doc.moveDown();
 
-    doc.text(`Modalidad: ${opportunity.mode}`);
-    doc.text(`Fecha límite: ${opportunity.deadline.toDateString()}`);
-    doc.text(`Contacto: ${opportunity.contact}`);
+    doc.fontSize(14).font('Helvetica').text(`Modalidad: ${opportunity.mode}`, { align: 'center' });
+    doc.text(`Fecha límite: ${new Date(opportunity.deadline).toDateString()}`, { align: 'center' });
+    doc.text(`Contacto: ${opportunity.contact}`, { align: 'center' });
+    doc.moveDown();
 
-    // Agregar el logo al flyer
-    doc.image(logoUrl, 50, 50, { width: 100, height: 100 }); // Ajusta la posición y tamaño
-
-    doc.fontSize(12).text(`Description: ${opportunity.description}`, 50, 200);
-    doc.text(`Requirements: ${opportunity.requirements.join(", ")}`, 50, 220);
-    doc.text(`Benefits: ${opportunity.benefits.join(", ")}`, 50, 240);
-    doc.text(`Deadline: ${opportunity.deadline}`, 50, 260);
+    if (companyLogoUrl) {
+      doc.image(companyLogoUrl, 50, 50, { width: 100, height: 100 }); // Ajusta la posición y tamaño
+    }
 
     doc.end();
 
