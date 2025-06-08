@@ -69,6 +69,12 @@ export const uuidValidatorBody = body("uuid")
   .isLength({ min: 1 })
   .withMessage("Invalid uuid length");
 
+export const uuidValidatorQuery = query("uuid")
+  .trim()
+  .isLength({ min: 1 })
+  .withMessage("Invalid uuid length")
+  .optional();
+
 export const forStudentsValidator = body("forStudents")
   .isBoolean()
   .withMessage("Invalid boolean value");

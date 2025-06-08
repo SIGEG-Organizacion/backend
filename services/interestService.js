@@ -1,14 +1,13 @@
 import { AppError } from "../utils/AppError.js";
 import Interest from "../models/interestModel.js";
-import Company from "../models/companyModel.js";
-import { ieNoOpen } from "helmet";
 import Opportunity from "../models/opportunityModel.js";
 import User from "../models/userModel.js";
 
 export const createInterest = async (userId, uuid) => {
   const opportunityExists = await Opportunity.findOne({ uuid });
-  if (!opportunityExists)
-    throw AppError.notFound("Invalid request: not found here");
+  if (!opportunityExists) throw AppError.notFound("Invalid request");
+  if (opportunityExists.status == "closed")
+    throw AppError.badRequest("Invalid request");
   const existing = await Interest.findOne({
     userId: userId,
     opportunityId: opportunityExists._id,
@@ -22,20 +21,20 @@ export const createInterest = async (userId, uuid) => {
 };
 
 export const removeInterest = async (userId, uuid) => {
-  const opportunityExists = await Opportunity.findOne({ uuid });
-  if (!opportunityExists)
-    throw AppError.notFound("Invalid request: not found here");
-  const interest = await Interest.findOne({
-    user: userId,
-    opportunityId: opportunityExists._id,
-  });
-  console.log(interest);
-  const deleted = await Interest.findOneAndDelete({
+  const opportunity = await Opportunity.findOne({ uuid });
+  if (!opportunity) {
+    throw AppError.notFound("Opportunity not found");
+  }
+  const deletedInterest = await Interest.findOneAndDelete({
     userId: userId,
-    opportunityId: opportunityExists._id,
+    opportunityId: opportunity._id,
   });
-  console.log(deleted);
-  if (!deleted) throw AppError.conflict("Invalid request: interest not found");
+  if (!deletedInterest) {
+    throw AppError.notFound(
+      "No interest record found for this user and opportunity"
+    );
+  }
+  return deletedInterest;
 };
 
 export const listInterestByStudent = async (studentMail) => {

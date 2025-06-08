@@ -34,6 +34,11 @@ const userSchema = new mongoose.Schema({
   },
   resetToken: { type: String },
   resetTokenExpire: { type: Date },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+    required: true,
+  },
 });
 
 // Evita duplicados (correo ya existente)

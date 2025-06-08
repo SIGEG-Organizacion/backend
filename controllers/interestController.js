@@ -25,7 +25,7 @@ export const unmarkInterest = async (req, res, next) => {
     await removeInterest(userId, uuid);
     res.status(200).json({ message: "Interest removed" });
   } catch (err) {
-    res.status(500).json({ error: "Error unmarking interest" });
+    next(err);
   }
 };
 
