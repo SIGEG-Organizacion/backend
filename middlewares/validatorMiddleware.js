@@ -6,9 +6,10 @@ export const validateRequest = (validations) => {
     // Run all validations
     const validationRes = await Promise.all(validations.map((v) => v.run(req)));
 
+    console.log("validating...");
     const errors = validationResult(req);
     if (errors.isEmpty()) return next(); // No errors → proceed
-
+    console.log("Errors found...");
     errors.array().forEach((error) => {
       console.log(error);
     });

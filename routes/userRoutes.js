@@ -7,6 +7,8 @@ import {
   forgotPassword,
   resetPassword,
   getCurrentUser,
+  manageUserAccess,
+  updateCurrentUser,
 } from "../controllers/userController.js";
 import {
   validateCreateUser,
@@ -15,6 +17,8 @@ import {
   validateResetPassword,
   validateCreateCompany,
   validateCreateStudent,
+  validateUserAcces,
+  validateUpdateUser,
 } from "../validators/usersValidator.js";
 import { validateRequest } from "../middlewares/validatorMiddleware.js";
 import { protect, authorizeRoles } from "../middlewares/authMiddleware.js";
@@ -50,8 +54,22 @@ router.post(
 );
 router.post(
   "/reset-password",
+  protect,
   validateRequest(validateResetPassword),
   resetPassword
+);
+router.put(
+  "/manage",
+  protect,
+  authorizeRoles("adminLink", "vadminTFG"),
+  validateRequest(validateUserAcces),
+  manageUserAccess
+);
+router.put(
+  "/update",
+  protect,
+  validateRequest(validateUpdateUser),
+  updateCurrentUser
 );
 router.get("/me", protect, getCurrentUser);
 router.get("/", async (req, res) => {

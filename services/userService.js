@@ -127,3 +127,67 @@ const generateResetToken = () => {
 
   return { resetToken, hashedToken: hashed, expires };
 };
+
+export const manageUser = async (email, action) => {
+  const user = await User.findOne({ email }).select("-_id -__v");
+  if (!user) {
+    throw AppError.notFound("User not found");
+  }
+
+  switch (action) {
+    case "validate":
+      user.validated = true;
+      await user.save();
+      return { message: "User validated successfully", user };
+
+    case "invalidate":
+      user.validated = false;
+      await user.save();
+      return { message: "User unvalidated successfully", user };
+
+    case "delete":
+      await User.findOneAndDelete({ email });
+      return { message: "User deleted successfully" };
+
+    default:
+      throw AppError.badRequest(
+        "Invalid action. Use 'validate', 'unvalidate', or 'delete'"
+      );
+  }
+};
+
+export const updateProfile = async (userId, updateData) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  if (!updateData || typeof updateData !== "object") {
+    throw new AppError("Update data must be an object", 400);
+  }
+
+  const allowedUpdates = ["phone_number"];
+
+  if (user.role === "student") {
+    allowedUpdates.push("major");
+    delete updateData.email;
+  } else if (user.role === "company") {
+    allowedUpdates.push("sector", "address", "logo");
+  } else {
+    allowedUpdates.push("email");
+  }
+
+  const filteredUpdate = Object.keys(updateData).reduce((acc, key) => {
+    if (allowedUpdates.includes(key)) {
+      acc[key] = updateData[key];
+    }
+    return acc;
+  }, {});
+
+  const updatedUser = await User.findByIdAndUpdate(userId, filteredUpdate, {
+    new: true,
+    runValidators: true,
+  }).select("-password -__v -_id");
+
+  return updatedUser;
+};

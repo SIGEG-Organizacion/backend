@@ -42,27 +42,65 @@ export const listInterestByStudent = async (studentMail) => {
   if (!studentExists) {
     throw AppError.notFound("Not found");
   }
+
   const interests = await Interest.find({ userId: studentExists._id })
     .populate({
       path: "opportunityId",
-      select: "-_id -companyId",
+      select: "companyId deadline description mode contact",
+      populate: {
+        path: "companyId",
+        select: "name",
+      },
     })
-    .select("-__v -_id -userId -companyId");
-  return interests;
+    .populate({
+      path: "userId",
+      select: "name contactNumber email",
+    })
+    .select("-__v -_id -createdAt");
+
+  return interests.map((interest) => ({
+    companyName: interest.opportunityId.companyId.name,
+    deadline: interest.opportunityId.deadline,
+    description: interest.opportunityId.description,
+    mode: interest.opportunityId.mode,
+    contact: interest.opportunityId.contact,
+    userName: interest.userId.name,
+    userContact: interest.userId.contactNumber,
+    userEmail: interest.userId.email,
+  }));
 };
 
-export const listInterestByOportunity = async (uuid) => {
+export const listInterestByOpportunity = async (uuid) => {
   const opportunityExists = await Opportunity.findOne({ uuid });
   if (!opportunityExists) {
     throw AppError.notFound("Not found");
   }
-  const interest = await Interest.find({
+
+  const interests = await Interest.find({
     opportunityId: opportunityExists._id,
   })
     .populate({
       path: "opportunityId",
-      select: "-_id -companyId",
+      select: "companyId deadline description mode contact",
+      populate: {
+        path: "companyId",
+        select: "name",
+      },
     })
-    .select("-__v -_id -userId -companyId");
-  return interest;
+    .populate({
+      path: "userId",
+      select: "name contactNumber email",
+    })
+    .select("-__v -_id -createdAt");
+
+  return interests.map((interest) => ({
+    companyName: interest.opportunityId.companyId.name,
+    deadline: interest.opportunityId.deadline,
+    description: interest.opportunityId.description,
+    mode: interest.opportunityId.mode,
+    contact: interest.opportunityId.contact,
+    userName: interest.userId.name,
+    userContact: interest.userId.contactNumber,
+    userEmail: interest.userId.email,
+  }));
 };

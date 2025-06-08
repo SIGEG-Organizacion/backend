@@ -4,6 +4,8 @@ import {
   generateNewToken,
   createCompany,
   createStudent,
+  manageUser,
+  updateProfile,
 } from "../services/userService.js";
 
 // Register a new user
@@ -105,4 +107,25 @@ export const resetPassword = async (req, res, next) => {
 
 export const getCurrentUser = (req, res, next) => {
   res.status(200).json({ user: req.user });
+};
+
+export const manageUserAccess = async (req, res, next) => {
+  const { email, action } = req.body;
+  try {
+    const result = await manageUser(email, action);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateCurrentUser = async (req, res, next) => {
+  const { updateData } = req.body;
+  try {
+    const userId = req.user._id;
+    const updatedUser = await updateProfile(userId, updateData);
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    next(error);
+  }
 };
