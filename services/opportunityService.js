@@ -91,22 +91,27 @@ export const deleteOpportunity = async (uuid) => {
 };
 
 export const listOpportunitiesWithName = async (company_name) => {
-  let query = {};
-  const userExists = await User.findOne({ name: company_name }, { id_: 1 });
-  if (!userExists) {
-    throw AppError.notFound("Not Found: user  doesnt exists");
+  const user = await User.findOne({ name: company_name }, { _id: 1 });
+  if (!user) {
+    throw AppError.notFound("Not Found: user doesn't exist");
   }
-  const companyExists = await Company.exists({ userId: userExists._id });
-  if (!companyExists) {
-    throw AppError.notFound("Not Found: company  doesnt exists");
+
+  const company = await Company.findOne({ userId: user._id });
+  if (!company) {
+    throw AppError.notFound("Not Found: company doesn't exist");
   }
-  const opportunities = await Opportunity.find(query)
+
+  const opportunities = await Opportunity.find({ companyId: company._id })
     .populate({
       path: "companyId",
       select: "address sector -_id",
-      populate: { path: "userId", select: "name -_id" },
+      populate: {
+        path: "userId",
+        select: "name -_id",
+      },
     })
     .select("-_id");
+
   return opportunities;
 };
 

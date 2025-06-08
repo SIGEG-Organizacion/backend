@@ -12,41 +12,6 @@ import reporRoutes from "./routes/reportRoutes.js";
 import startOpportunityCleanupJob from "./utils/opportunityCleaner.js";
 import rateLimit from "express-rate-limit";
 
-// To-Do List for /app.js
-// ======================
-//
-// [ ] 1. Import necessary modules:
-//       - Express library (for creating the server)
-//       - Mongoose (for MongoDB connection)
-//       - dotenv (for environment variable management)
-//       - Routes for handling user, student, company, opportunity, admin, and report actions
-//       - Middleware (authentication, error handling, etc.)
-// [ ] 2. Load environment variables using dotenv:
-//       - Ensure .env file contains required variables (e.g., MONGO_URI, JWT_SECRET)
-// [ ] 3. Set up the Express app:
-//       - Initialize the app using `express()`
-//       - Set the port to listen on (e.g., process.env.PORT or default to 5000)
-// [ ] 4. Set up middlewares:
-//       - Add middleware for parsing JSON (app.use(express.json()))
-//       - Add authentication middleware to protect certain routes
-//       - Add error handling middleware to capture and respond to errors
-// [ ] 5. Set up routes:
-//       - Use the defined routes for users, students, companies, opportunities, admin, and reports
-//       - Example: `app.use('/api/users', userRoutes)`
-// [ ] 6. Set up MongoDB connection:
-//       - Connect to MongoDB using Mongoose and the URI from environment variables
-//       - Handle connection success and errors
-// [ ] 7. Handle server startup:
-//       - Add a listener to the port (e.g., `app.listen(PORT, () => { ... })`)
-//       - Log a message indicating the server is running and on which port
-// [ ] 8. Add optional features:
-//       - CORS handling (if necessary) using a CORS middleware
-//       - Logging (e.g., using `morgan` or a custom logger)
-// [ ] 9. Test the server to ensure:
-//       - The app is correctly connected to MongoDB
-//       - Routes and endpoints are working as expected
-//       - Middleware is handling errors and authentication correctly
-
 // Load env variables
 dotenv.config();
 
