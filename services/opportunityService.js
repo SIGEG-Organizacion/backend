@@ -80,10 +80,11 @@ export const updateOpportunityFields = async (
 };
 
 export const deleteOpportunity = async (uuid) => {
-  const opportunity = await Opportunity.findOneAndDelete({ uuid });
+  const opportunity = await Opportunity.findOne({ uuid });
   if (!opportunity) {
-    throw AppError.notFound("Not Found: opportunity  doesnt exists");
+    throw AppError.notFound("Not Found: opportunity doesn't exist");
   }
+  await opportunity.remove();
   const flyer = await Flyer.findOne({ opportunityId: opportunity._id });
   if (flyer) {
     await flyer.deleteOne();

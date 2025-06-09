@@ -1,6 +1,7 @@
 // models/opportunityModel.js
 
 import mongoose from "mongoose";
+import Interest from "./interestModel.js"; // Importar el modelo de Interest para eliminar los intereses
 
 const opportunitySchema = new mongoose.Schema({
   companyId: {
@@ -8,18 +9,15 @@ const opportunitySchema = new mongoose.Schema({
     ref: "Company",
     required: true,
   },
-
   createdAt: {
     type: Date,
     default: Date.now,
     required: true,
   },
-
   deadline: {
     type: Date,
     required: true,
   },
-
   description: {
     type: String,
     required: true,
@@ -31,7 +29,6 @@ const opportunitySchema = new mongoose.Schema({
       message: "Description cannot be empty",
     },
   },
-
   requirements: [
     {
       type: String,
@@ -44,7 +41,6 @@ const opportunitySchema = new mongoose.Schema({
       },
     },
   ],
-
   benefits: [
     {
       type: String,
@@ -57,13 +53,11 @@ const opportunitySchema = new mongoose.Schema({
       },
     },
   ],
-
   mode: {
     type: String,
     required: true,
     enum: ["remote", "on-site", "hybrid"],
   },
-
   contact: {
     type: String,
     required: true,
@@ -75,31 +69,35 @@ const opportunitySchema = new mongoose.Schema({
       message: "Invalid contact email format",
     },
   },
-
   status: {
     type: String,
     required: true,
     enum: ["pending-approval", "closed", "open"],
   },
-
   uuid: {
     type: String,
     unique: true,
     required: true,
   },
-
-  // Nuevo campo para guardar la URL del flyer
   flyerUrl: {
     type: String,
-    required: false, // No obligatorio, solo se llena después de generar el flyer
+    required: false,
   },
-
   forStudents: {
     type: Boolean,
     required: true,
   },
 });
 
-const Opportunity = mongoose.model("Opportunity", opportunitySchema);
+// Middleware para eliminar los intereses relacionados cuando la oportunidad se elimina
+opportunitySchema.pre('remove', async function(next) {
+  try {
+    await Interest.deleteMany({ opportunityId: this._id });
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
+const Opportunity = mongoose.model("Opportunity", opportunitySchema);
 export default Opportunity;
