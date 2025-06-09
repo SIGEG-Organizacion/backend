@@ -79,7 +79,7 @@ export const updateOpportunityFields = async (
   return updated;
 };
 
-export const deleteOpportunity = async (uuid) => {
+export const deleteOpportunityEntry = async (uuid) => {
   const opportunity = await Opportunity.findOneAndDelete({ uuid });
   if (!opportunity) {
     throw AppError.notFound("Not Found: opportunity  doesnt exists");

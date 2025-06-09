@@ -35,7 +35,7 @@ router.put(
   updateOpportunity
 );
 router.delete(
-  "delete/:uuid",
+  "/delete/:uuid",
   protect,
   authorizeRoles("company", "adminLink"),
   validateRequest([uuidValidator]),

@@ -6,6 +6,7 @@ import {
   getOpportunityService,
   createFlyer,
   getOpportunitiesFiltered,
+  deleteOpportunityEntry,
 } from "../services/opportunityService.js";
 
 export const createPublication = async (req, res, next) => {
@@ -86,7 +87,7 @@ export const updateOpportunity = async (req, res, next) => {
 export const deleteOpportunity = async (req, res, next) => {
   const { uuid } = req.params;
   try {
-    await deleteOpportunity(uuid);
+    await deleteOpportunityEntry(uuid);
     res.status(200).json({ message: "Opportunity deleted successfully" });
   } catch (err) {
     next(err);
