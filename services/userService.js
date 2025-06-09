@@ -93,7 +93,7 @@ export const generateNewToken = async (email) => {
   return resetToken;
 };
 
-export const resetPassword = async (token, newPassword) => {
+export const resetPasswordWithToken = async (token, newPassword) => {
   const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
   const user = await User.findOne({
     resetToken: hashedToken,

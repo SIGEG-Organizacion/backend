@@ -3,7 +3,7 @@ import Interest from "../models/interestModel.js";
 import {
   createInterest,
   listInterestByOpportunity,
-  listInterestByStudent,
+  listInterestByMail,
   removeInterest,
 } from "../services/interestService.js";
 
@@ -34,22 +34,30 @@ export const getUserInterests = async (req, res) => {
 
   try {
     const interests = await Interest.find({ userId })
+
       .populate({
         path: "opportunityId",
-        select: "companyId deadline description mode contact",
-        populate: {
-          path: "companyId",
-          select: "name",
-        },
+        select: "companyId deadline description mode contact uuid",
+        populate: [
+          {
+            path: "companyId",
+            select: "userId",
+            populate: {
+              path: "userId",
+              select: "name",
+            },
+          },
+        ],
       })
       .populate({
         path: "userId",
-        select: "name contactNumber email",
+        select: "name contactNumber email role",
       })
       .select("-__v -_id -createdAt");
 
     const formattedInterests = interests.map((interest) => ({
-      companyName: interest.opportunityId.companyId.name,
+      uuid: interest.opportunityId.uuid,
+      companyName: interest.opportunityId.companyId.userId.name,
       deadline: interest.opportunityId.deadline,
       description: interest.opportunityId.description,
       mode: interest.opportunityId.mode,
@@ -57,18 +65,18 @@ export const getUserInterests = async (req, res) => {
       userName: interest.userId.name,
       userContact: interest.userId.contactNumber,
       userEmail: interest.userId.email,
+      userRole: interest.userId.role,
     }));
-
     res.json(formattedInterests);
   } catch (err) {
     res.status(500).json({ error: "Error retrieving interests" });
   }
 };
 
-export const getInterestByStudentMail = async (req, res) => {
-  const { studentMail } = req.params;
+export const getInterestByMail = async (req, res) => {
+  const { mail } = req.params;
   try {
-    const interests = await listInterestByStudent(studentMail);
+    const interests = await listInterestByMail(mail);
     res.status(200).json({ interests });
   } catch (err) {
     res.status(500).json({ error: "Error retrieving interests" });

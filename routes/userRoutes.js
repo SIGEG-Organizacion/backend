@@ -19,6 +19,7 @@ import {
   validateCreateStudent,
   validateUserAcces,
   validateUpdateUser,
+  roleValidator,
 } from "../validators/usersValidator.js";
 import { validateRequest } from "../middlewares/validatorMiddleware.js";
 import { protect, authorizeRoles } from "../middlewares/authMiddleware.js";
@@ -72,21 +73,32 @@ router.put(
   updateCurrentUser
 );
 router.get("/me", protect, getCurrentUser);
-router.get("/", async (req, res) => {
-  const users = await User.find().select("-password");
-  res.json({ users });
-});
-router.put(
-  "/:id/role",
+router.get(
+  "/",
   protect,
-  authorizeRoles("adminLink"),
+  authorizeRoles("adminLink", "vadminTFG"),
+  async (req, res) => {
+    const users = await User.find().select(
+      "-password -_id -__v -resetToken -resetTokenExpire"
+    );
+    res.json({ users });
+  }
+);
+router.put(
+  "/changeRole/:email",
+  protect,
+  authorizeRoles("vadminTFG"),
+  validateRequest([roleValidator]),
   async (req, res) => {
     const { role } = req.body;
-    const user = await User.findById(req.params.id);
+    const user = await User.findOne({ email: req.params.email })?.select(
+      "-password -__v -resetToken -resetTokenExpire"
+    );
     if (!user) throw AppError.notFound("User not found");
     user.role = role;
     await user.save();
-    res.json({ message: "Role updated", user });
+    const { _id, ...userData } = user ? user.toObject() : user;
+    res.json({ message: "Role updated", userData });
   }
 );
 

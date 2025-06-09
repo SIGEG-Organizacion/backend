@@ -6,6 +6,7 @@ import {
   createStudent,
   manageUser,
   updateProfile,
+  resetPasswordWithToken,
 } from "../services/userService.js";
 
 // Register a new user
@@ -98,7 +99,7 @@ export const forgotPassword = async (req, res, next) => {
 export const resetPassword = async (req, res, next) => {
   try {
     const { token, newPassword } = req.body;
-    resetPassword(token, newPassword);
+    await resetPasswordWithToken(token, newPassword);
     res.json({ message: "Password successfully reset" });
   } catch (err) {
     next(err);
@@ -106,7 +107,10 @@ export const resetPassword = async (req, res, next) => {
 };
 
 export const getCurrentUser = (req, res, next) => {
-  res.status(200).json({ user: req.user });
+  const { _id, __v, ...userWithoutIdAndV } = req.user.toObject
+    ? req.user.toObject()
+    : req.user;
+  res.status(200).json({ user: userWithoutIdAndV });
 };
 
 export const manageUserAccess = async (req, res, next) => {
