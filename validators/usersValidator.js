@@ -18,11 +18,15 @@ export const phoneValidator = body("phone_number")
   .matches(/^\+(?:[0-9] ?){6,14}[0-9]$/)
   .withMessage("Please provide a valid international phone number");
 
-export const roleValidator = body("role");
-body("role")
+export const roleValidator = body("role")
   .notEmpty()
   .isIn(["student", "company", "vadminTFG", "adminLink", "graduate"])
   .withMessage("Invalid role");
+
+export const actionValidator = body("action")
+  .notEmpty()
+  .isIn(["validate", "delete", "invalidate"])
+  .withMessage("Invalid action");
 
 export const nameValidator = body("name")
   .notEmpty()
@@ -152,19 +156,22 @@ export const validateCreateCompany = [
   body("address").notEmpty().withMessage("Adress is required"),
 ];
 
-// Login validations
 export const validateLogin = [emailValidator, passwordValidator];
-
-// Generate new token validations (for password reset)
 export const validateGenerateNewToken = [emailValidator];
-
-// Reset password validations
 export const validateResetPassword = [
   body("token").notEmpty().withMessage("Token is required"),
   passwordValidator,
 ];
-
-// Optional: If you have routes with token in params (like GET /reset-password/:token)
 export const validateTokenParam = [
   param("token").notEmpty().withMessage("Token is required"),
+];
+
+export const validateUserAcces = [emailValidator, actionValidator];
+
+export const validateUpdateUser = [
+  emailValidator.optional(),
+  phoneValidator.optional(),
+  majorValidator.optional(),
+  body("address").optional().isString().withMessage("Address must be a string"),
+  body("logo").optional().isURL().withMessage("Logo must be a valid URL"),
 ];

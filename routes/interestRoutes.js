@@ -4,7 +4,7 @@ import {
   markInterest,
   unmarkInterest,
   getUserInterests,
-  getInterestByStudentMail,
+  getInterestByMail,
   getInterestByOpportunity,
 } from "../controllers/interestController.js";
 import { protect, authorizeRoles } from "../middlewares/authMiddleware.js";
@@ -38,10 +38,10 @@ router.get(
   getUserInterests
 );
 router.get(
-  "/:studentMail",
+  "/:mail",
   protect,
   validateRequest([emailValidator]),
-  getInterestByStudentMail
+  getInterestByMail
 );
 router.get(
   "/opportunity/:uuid",

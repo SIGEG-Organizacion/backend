@@ -37,32 +37,86 @@ export const removeInterest = async (userId, uuid) => {
   return deletedInterest;
 };
 
-export const listInterestByStudent = async (studentMail) => {
+export const listInterestByMail = async (studentMail) => {
   const studentExists = await User.findOne({ email: studentMail });
   if (!studentExists) {
-    throw AppError.notFound("Not found");
+    throw AppError.notFound("Student not found");
   }
+
   const interests = await Interest.find({ userId: studentExists._id })
     .populate({
       path: "opportunityId",
-      select: "-_id -companyId",
+      select: "companyId deadline description mode contact uuid",
+      populate: [
+        {
+          path: "companyId",
+          select: "userId",
+          populate: {
+            path: "userId",
+            select: "name",
+          },
+        },
+      ],
     })
-    .select("-__v -_id -userId -companyId");
-  return interests;
+    .populate({
+      path: "userId",
+      select: "name contactNumber email role",
+    })
+    .select("-__v -_id -createdAt");
+
+  return interests.map((interest) => ({
+    uuid: interest.opportunityId.uuid,
+    companyName: interest.opportunityId.companyId.userId.name,
+    deadline: interest.opportunityId.deadline,
+    description: interest.opportunityId.description,
+    mode: interest.opportunityId.mode,
+    contact: interest.opportunityId.contact,
+    userName: interest.userId.name,
+    userContact: interest.userId.contactNumber,
+    userEmail: interest.userId.email,
+    userRole: interest.userId.role,
+  }));
 };
 
-export const listInterestByOportunity = async (uuid) => {
+export const listInterestByOpportunity = async (uuid) => {
   const opportunityExists = await Opportunity.findOne({ uuid });
   if (!opportunityExists) {
-    throw AppError.notFound("Not found");
+    throw AppError.notFound("Opportunity not found");
   }
-  const interest = await Interest.find({
+
+  const interests = await Interest.find({
     opportunityId: opportunityExists._id,
   })
     .populate({
       path: "opportunityId",
-      select: "-_id -companyId",
+      select: "companyId deadline description mode contact",
+      populate: [
+        {
+          path: "companyId",
+          select: "userId",
+          populate: {
+            path: "userId",
+            select: "name",
+          },
+        },
+      ],
     })
-    .select("-__v -_id -userId -companyId");
-  return interest;
+    .populate({
+      path: "userId",
+      select: "name contactNumber email role",
+    })
+    .select("-__v -_id -createdAt");
+
+  return interests.map((interest) => ({
+    uuid: opportunityExists.uuid,
+    companyName: interest.opportunityId.companyId.userId.name,
+    deadline: interest.opportunityId.deadline,
+    description: interest.opportunityId.description,
+    mode: interest.opportunityId.mode,
+    contact: interest.opportunityId.contact,
+    userName: interest.userId.name,
+    userContact: interest.userId.contactNumber,
+    userEmail: interest.userId.email,
+    userRole: interest.userId.role,
+  }));
 };

@@ -4,6 +4,9 @@ import {
   generateNewToken,
   createCompany,
   createStudent,
+  manageUser,
+  updateProfile,
+  resetPasswordWithToken,
 } from "../services/userService.js";
 import { upload } from "../middlewares/fileUpload.js"; 
 import { uploadLogoToB2 } from "../utils/b2Uploader.js"; 
@@ -111,7 +114,7 @@ export const forgotPassword = async (req, res, next) => {
 export const resetPassword = async (req, res, next) => {
   try {
     const { token, newPassword } = req.body;
-    resetPassword(token, newPassword);
+    await resetPasswordWithToken(token, newPassword);
     res.json({ message: "Password successfully reset" });
   } catch (err) {
     next(err);
@@ -119,5 +122,29 @@ export const resetPassword = async (req, res, next) => {
 };
 
 export const getCurrentUser = (req, res, next) => {
-  res.status(200).json({ user: req.user });
+  const { _id, __v, ...userWithoutIdAndV } = req.user.toObject
+    ? req.user.toObject()
+    : req.user;
+  res.status(200).json({ user: userWithoutIdAndV });
+};
+
+export const manageUserAccess = async (req, res, next) => {
+  const { email, action } = req.body;
+  try {
+    const result = await manageUser(email, action);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateCurrentUser = async (req, res, next) => {
+  const { updateData } = req.body;
+  try {
+    const userId = req.user._id;
+    const updatedUser = await updateProfile(userId, updateData);
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    next(error);
+  }
 };
