@@ -64,7 +64,7 @@ const opportunitySchema = new mongoose.Schema({
     enum: ["remote", "on-site", "hybrid"],
   },
 
-  contact: {
+  email: {
     type: String,
     required: true,
     validate: {
