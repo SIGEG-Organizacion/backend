@@ -12,18 +12,30 @@ const meetingRequestSchema = new mongoose.Schema(
       ref: "Company",
       required: true,
     },
+
+    // —— Nueva propiedad: fecha solicitada ——
+    requestDate: {
+      type: Date,
+      required: true, // opcional: solo si siempre se envía
+    },
+
     startTime: {
-      type: String, // formato: 'HH:mm', ej: '09:00'
+      type: String, // 'HH:mm'
       required: true,
     },
     endTime: {
-      type: String, // formato: 'HH:mm', ej: '13:30'
+      type: String, // 'HH:mm'
       required: true,
     },
+
     calendarProvider: {
       type: String,
       enum: ["google", "microsoft"],
       required: true,
+    },
+
+    description: {
+      type: String,
     },
   },
   {

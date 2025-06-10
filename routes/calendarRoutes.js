@@ -4,6 +4,8 @@ import {
   updateSlotValidator,
   deleteSlotValidator,
   listSlotsValidator,
+  createRequestValidator,
+  requestIdParamValidator,
 } from "../validators/calendarValidator.js";
 import { oauth2Client } from "../config/googleClient.js";
 import Calendar from "../models/calendarModel.js";
@@ -14,66 +16,68 @@ import {
   updateSlot,
   deleteSlot,
   listSlots,
+  createRequest,
+  denyRequest,
+  approveRequest,
+  getRequests,
 } from "../controllers/calendarController.js";
 
 const router = express.Router();
 
 router.get(
-  "/availabilitySlots",
-  //protect,
-  //authorizeRoles("adminLink", "vadminTFG", "company"),
-  //validateRequest(listSlotsValidator),
-  async (req, res) => {
-    try {
-      // Simulate async operation (e.g., database call, network request)
-      const result = await new Promise((resolve) => {
-        setTimeout(() => {
-          console.log("Data fetched!");
-          resolve("Data fetched successfully");
-        }, 2000); // Simulate 2 seconds delay
-      });
+  "/google/auth",
+  protect,
+  authorizeRoles("adminLink", "vadminTFG"),
+  (req, res) => {
+    const url = oauth2Client.generateAuthUrl({
+      access_type: "offline",
+      scope: [
+        "https://www.googleapis.com/auth/calendar.events.readonly",
+        "https://www.googleapis.com/auth/calendar.events",
+      ],
+      prompt: "consent",
+    });
+    res.redirect(url);
+  }
+);
 
-      // Send the result as the response
-      res.json({ message: result });
-    } catch (error) {
-      res.status(500).json({ error: "Something went wrong" });
+router.get(
+  "/google/callback",
+  protect,
+  authorizeRoles("adminLink", "vadminTFG"),
+  async (req, res, next) => {
+    try {
+      const { code } = req.query;
+      const { tokens } = await oauth2Client.getToken(code);
+      await saveGoogleTokens(req.user._id, tokens);
+      res.send("Google Calendar conectado correctamente!");
+    } catch (err) {
+      next(err);
     }
   }
 );
 
-router.get("/google/auth", (req, res) => {
-  const authUrl = oauth2Client.generateAuthUrl({
-    access_type: "offline",
-    scope: [
-      "https://www.googleapis.com/auth/calendar.events.readonly",
-      "https://www.googleapis.com/auth/calendar.events",
-    ],
-    prompt: "consent",
-  });
-  res.redirect(authUrl);
-});
-
-router.get("/google/callback", async (req, res, next) => {
-  try {
-    const { code } = req.query;
-    const { tokens } = await oauth2Client.getToken(code);
-    const { userId } = req.user._id;
-
-    console.log(tokens);
-    await Calendar.create({
-      userId,
-      provider: "google",
-      accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
-      tokenExpiry: tokens.expiry_date,
-    });
-    oauth2Client.setCredentials(tokens);
-
-    res.send("¡Google Calendar conectado! Ahora puedes leer/crear eventos.");
-  } catch (err) {
-    next(err);
+router.get(
+  "/google/events",
+  protect,
+  authorizeRoles("adminLink", "vadminTFG"),
+  async (req, res, next) => {
+    try {
+      const events = await listGoogleEvents(req.user._id);
+      res.json(events);
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
+
+router.get(
+  "/availabilitySlots",
+  protect,
+  authorizeRoles("adminLink", "vadminTFG", "company"),
+  validateRequest(listSlotsValidator),
+  listSlots
+);
 
 router.post(
   "/availabilitySlots",
@@ -95,6 +99,39 @@ router.put(
   validateRequest(updateSlotValidator),
   authorizeRoles("adminLink", "vadminTFG"),
   updateSlot
+);
+
+//companies
+router.post(
+  "/request",
+  protect,
+  validateRequest(createRequestValidator),
+  authorizeRoles("company"),
+  createRequest
+);
+
+//admins
+router.delete(
+  "/request/:requestId",
+  protect,
+  validateRequest(requestIdParamValidator),
+  authorizeRoles("adminLink", "vadminTFG"),
+  denyRequest
+);
+router.put(
+  "/request/:requestId/approve",
+  protect,
+  validateRequest(requestIdParamValidator),
+  authorizeRoles("adminLink", "vadminTFG"),
+  approveRequest
+);
+
+//for both:
+router.get(
+  "/request",
+  protect,
+  authorizeRoles("company", "adminLink", "vadminTFG"),
+  getRequests
 );
 
 export default router;

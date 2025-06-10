@@ -39,8 +39,8 @@ startOpportunityCleanupJob();
 
 // Routes
 
+app.use("/api/users", userRoutes);
 app.use("/api/calendar", calendarRoutes);
-app.use("/api/fix", userRoutes);
 app.use("/api/opportunities", opportunityRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/interests", interestRoutes);

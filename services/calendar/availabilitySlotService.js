@@ -4,45 +4,45 @@ import User from "../../models/userModel.js";
 
 export const createAvailabilitySlot = async (
   adminId,
-  dayOfWeek,
+  date,
   startTime,
   endTime
 ) => {
-  const [startH, startM] = startTime.split(":").map(Number);
-  const [endH, endM] = endTime.split(":").map(Number);
-  const startMinutes = startH * 60 + startM;
-  const endMinutes = endH * 60 + endM;
-
-  if (startMinutes >= endMinutes) {
-    throw AppError.badRequest("Start time must be before end time");
+  const slotDate = new Date(date);
+  if (isNaN(slotDate)) {
+    throw AppError.badRequest("Invalid date format. Use YYYY-MM-DD");
   }
 
-  const overlappingSlot = await AvailabilitySlot.findOne({
-    adminId,
-    dayOfWeek,
-    $or: [
-      {
-        startTime: { $lt: endTime },
-        endTime: { $gt: startTime },
-      },
-    ],
-  });
+  const [sh, sm] = startTime.split(":").map(Number);
+  const [eh, em] = endTime.split(":").map(Number);
+  const startMinutes = sh * 60 + sm;
+  const endMinutes = eh * 60 + em;
+  if (startMinutes >= endMinutes) {
+    throw AppError.badRequest("startTime must be before endTime");
+  }
 
-  if (overlappingSlot) {
-    throw AppError.conflict("This time slot overlaps with an existing slot");
+  const overlapping = await AvailabilitySlot.findOne({
+    adminId,
+    date: slotDate,
+    startTime: { $lt: endTime },
+    endTime: { $gt: startTime },
+  });
+  if (overlapping) {
+    throw AppError.conflict(
+      "This time slot overlaps an existing one on that date"
+    );
   }
 
   const slot = new AvailabilitySlot({
     adminId,
-    dayOfWeek,
+    date: slotDate,
     startTime,
     endTime,
   });
-
   await slot.save();
 
   return {
-    dayOfWeek: slot.dayOfWeek,
+    date: slot.date.toISOString().split("T")[0],
     startTime: slot.startTime,
     endTime: slot.endTime,
     createdAt: slot.createdAt,
@@ -51,23 +51,41 @@ export const createAvailabilitySlot = async (
 };
 
 export const updateAvailabilitySlot = async (adminId, slotId, updates) => {
-  const slot = await AvailabilitySlot.findOne({
-    _id: slotId,
-    adminId,
-  });
-
+  const slot = await AvailabilitySlot.findOne({ _id: slotId, adminId });
   if (!slot) {
     throw AppError.notFound("Availability slot not found or not yours");
   }
 
-  if (updates.dayOfWeek !== undefined) slot.dayOfWeek = updates.dayOfWeek;
-  if (updates.startTime !== undefined) slot.startTime = updates.startTime;
-  if (updates.endTime !== undefined) slot.endTime = updates.endTime;
+  if (updates.date) {
+    const d = new Date(updates.date);
+    if (isNaN(d)) throw AppError.badRequest("Invalid date format");
+    slot.date = d;
+  }
+  if (updates.startTime) slot.startTime = updates.startTime;
+  if (updates.endTime) slot.endTime = updates.endTime;
+
+  const [sh, sm] = slot.startTime.split(":").map(Number);
+  const [eh, em] = slot.endTime.split(":").map(Number);
+  if (sh * 60 + sm >= eh * 60 + em) {
+    throw AppError.badRequest("startTime must be before endTime");
+  }
+
+  const overlapping = await AvailabilitySlot.findOne({
+    adminId,
+    date: slot.date,
+    _id: { $ne: slotId },
+    startTime: { $lt: slot.endTime },
+    endTime: { $gt: slot.startTime },
+  });
+  if (overlapping) {
+    throw AppError.conflict(
+      "Updated slot overlaps an existing one on that date"
+    );
+  }
 
   await slot.save();
-
   return {
-    dayOfWeek: slot.dayOfWeek,
+    date: slot.date.toISOString().split("T")[0],
     startTime: slot.startTime,
     endTime: slot.endTime,
     updatedAt: slot.updatedAt,
@@ -79,7 +97,6 @@ export const deleteAvailabilitySlot = async (adminId, slotId) => {
     _id: slotId,
     adminId,
   });
-
   if (!deleted) {
     throw AppError.notFound("Availability slot not found or not yours");
   }
@@ -92,8 +109,17 @@ export const listAvailabilitySlotsByAdmin = async (userEmail) => {
   }
 
   const slots = await AvailabilitySlot.find({ adminId: user._id })
-    .select("-_id dayOfWeek startTime endTime createdAt updatedAt")
-    .sort({ dayOfWeek: 1, startTime: 1 });
+    .select("date startTime endTime createdAt updatedAt")
+    .sort({ date: 1, startTime: 1 });
 
-  return slots;
+  console.log("gay");
+
+  return slots.map((s) => ({
+    date: s.date.toISOString().split("T")[0],
+    startTime: s.startTime,
+    endTime: s.endTime,
+    id: s._id,
+    createdAt: s.createdAt,
+    updatedAt: s.updatedAt,
+  }));
 };

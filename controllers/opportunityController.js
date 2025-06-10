@@ -61,7 +61,7 @@ export const updateOpportunity = async (req, res, next) => {
     email,
     status,
     forStudents,
-  } = req.body;
+  } = req.body || {};
   try {
     const updated = await updateOpportunityFields(
       uuid,

@@ -1,10 +1,7 @@
 import { body, param, query } from "express-validator";
 
-const dayOfWeekValidator = body("dayOfWeek")
-  .isInt({ min: 0, max: 6 })
-  .withMessage("dayOfWeek must be an integer from 0 (Sunday) to 6 (Saturday)");
-
-const timeFormatRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+// Regex para horas en HH:mm o H:mm
+const timeFormatRegex = /^([0-9]|1[0-9]|2[0-3]):([0-5][0-9])$/;
 
 const startTimeValidator = body("startTime")
   .matches(timeFormatRegex)
@@ -14,41 +11,45 @@ const endTimeValidator = body("endTime")
   .matches(timeFormatRegex)
   .withMessage("endTime must be in HH:mm format")
   .custom((value, { req }) => {
-    const [startH, startM] = req.body.startTime?.split(":") || [];
-    const [endH, endM] = value.split(":");
-
-    if (startH == null || startM == null) return true; // skip if no startTime provided
-
-    const start = parseInt(startH) * 60 + parseInt(startM);
-    const end = parseInt(endH) * 60 + parseInt(endM);
-    if (start >= end) {
-      throw new Error("startTime must be before endTime");
+    if (!req.body.startTime) return true;
+    const [sh, sm] = req.body.startTime.split(":").map(Number);
+    const [eh, em] = value.split(":").map(Number);
+    if (sh * 60 + sm >= eh * 60 + em) {
+      throw new Error("endTime must be after startTime");
     }
     return true;
   });
 
+// ID de slot en URL
 const slotIdValidator = param("slotId")
   .isMongoId()
   .withMessage("Invalid slotId: must be a valid Mongo ID");
 
 const emailQueryValidator = query("email")
+  .notEmpty()
+  .withMessage("Query param 'email' is required")
   .isEmail()
-  .withMessage("Query param 'email' must be a valid email address");
-
-// Validators
+  .withMessage("Please provide a valid email")
+  .normalizeEmail();
 
 export const createSlotValidator = [
-  dayOfWeekValidator,
+  body("date")
+    .notEmpty()
+    .withMessage("date is required")
+    .isISO8601()
+    .toDate()
+    .withMessage("date must be a valid ISO8601 date (YYYY-MM-DD)"),
   startTimeValidator,
   endTimeValidator,
 ];
 
 export const updateSlotValidator = [
   slotIdValidator,
-  body("dayOfWeek")
+  body("date")
     .optional()
-    .isInt({ min: 0, max: 6 })
-    .withMessage("dayOfWeek must be between 0 and 6"),
+    .isISO8601()
+    .toDate()
+    .withMessage("date must be a valid ISO8601 date (YYYY-MM-DD)"),
   body("startTime")
     .optional()
     .matches(timeFormatRegex)
@@ -59,18 +60,48 @@ export const updateSlotValidator = [
     .withMessage("endTime must be in HH:mm format")
     .custom((value, { req }) => {
       if (!req.body.startTime) return true;
-      const [startH, startM] = req.body.startTime?.split(":") || [];
-      const [endH, endM] = value.split(":");
-
-      const start = parseInt(startH) * 60 + parseInt(startM);
-      const end = parseInt(endH) * 60 + parseInt(endM);
-      if (start >= end) {
-        throw new Error("startTime must be before endTime");
+      const [sh, sm] = req.body.startTime.split(":").map(Number);
+      const [eh, em] = value.split(":").map(Number);
+      if (sh * 60 + sm >= eh * 60 + em) {
+        throw new Error("endTime must be after startTime");
       }
       return true;
     }),
 ];
 
 export const deleteSlotValidator = [slotIdValidator];
-
 export const listSlotsValidator = [emailQueryValidator];
+
+export const requestIdParamValidator = [
+  param("requestId").isMongoId().withMessage("Invalid request ID format"),
+];
+
+export const createRequestValidator = [
+  body("adminEmail")
+    .notEmpty()
+    .withMessage("adminEmail is required")
+    .isEmail()
+    .withMessage("adminEmail must be a valid email")
+    .normalizeEmail(),
+
+  body("requestDate")
+    .notEmpty()
+    .withMessage("requestDate is required")
+    .isISO8601()
+    .toDate()
+    .withMessage("requestDate must be a valid ISO8601 date (YYYY-MM-DD)"),
+
+  startTimeValidator,
+  endTimeValidator,
+
+  body("calendarProvider")
+    .isIn(["google", "microsoft"])
+    .withMessage("calendarProvider must be either 'google' or 'microsoft'"),
+
+  body("description")
+    .optional()
+    .isString()
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage("description must be at most 500 characters"),
+];
