@@ -82,25 +82,40 @@ export const updateOpportunityFields = async (
 };
 
 export const deleteOpportunity = async (uuid) => {
-  const opportunity = await Opportunity.findOne({ uuid });
-  if (!opportunity) {
-    throw AppError.notFound("Opportunity not found");
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    // Buscar la oportunidad por UUID
+    const opportunity = await Opportunity.findOne({ uuid }).session(session);
+    if (!opportunity) {
+      throw AppError.notFound("Opportunity not found");
+    }
+
+    // Eliminar todos los intereses relacionados
+    await Interest.deleteMany({ opportunityId: opportunity._id }).session(session);
+
+    // Eliminar el flyer relacionado, si existe
+    const flyer = await Flyer.findOne({ opportunityId: opportunity._id }).session(session);
+    if (flyer) {
+      await flyer.deleteOne().session(session);
+    }
+
+    // Eliminar la oportunidad
+    await opportunity.deleteOne().session(session);
+
+    // Confirmar transacción
+    await session.commitTransaction();
+    session.endSession();
+
+    return { message: "Opportunity and related interests and flyer deleted successfully" };
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw new Error("Error during opportunity deletion: " + error.message);
   }
-
-  // Eliminar los intereses relacionados por el ObjectId de la oportunidad
-  await Interest.deleteMany({ opportunityId: opportunity._id });
-
-  // Eliminar el flyer asociado, si existe
-  const flyer = await Flyer.findOne({ opportunityId: opportunity._id });
-  if (flyer) {
-    await flyer.deleteOne();
-  }
-
-  // Eliminar la oportunidad
-  await opportunity.deleteOne();
-
-  return { message: "Opportunity and related interests and flyer deleted successfully" };
 };
+
+
 
 
 export const listOpportunitiesWithName = async (company_name) => {

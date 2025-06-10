@@ -98,6 +98,7 @@ export const updateOpportunity = async (req, res, next) => {
 
 export const deleteOpportunity = async (req, res, next) => {
   const { uuid } = req.params;
+  console.log(`Attempting to delete opportunity with uuid: ${uuid}`);  // Log para depurar
 
   try {
     const result = await deleteOpportunityService(uuid);
