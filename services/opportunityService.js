@@ -17,7 +17,7 @@ export const createOpportunity = async (
   benefits,
   mode,
   deadline,
-  contact,
+  email,
   forStudents
 ) => {
   const opportunityExists = await Opportunity.findOne({
@@ -37,7 +37,7 @@ export const createOpportunity = async (
     benefits,
     mode,
     deadline: new Date(deadline),
-    contact,
+    email,
     status: "pending-approval",
     uuid: uuidv4(),
     forStudents,
@@ -53,7 +53,7 @@ export const updateOpportunityFields = async (
   benefits,
   mode,
   deadline,
-  contact,
+  email,
   status,
   forStudents
 ) => {
@@ -67,7 +67,7 @@ export const updateOpportunityFields = async (
   if (benefits) opportunity.benefits = benefits;
   if (mode) opportunity.mode = mode;
   if (deadline) opportunity.deadline = deadline;
-  if (contact) opportunity.contact = contact;
+  if (email) opportunity.contact = email;
   if (status) {
     opportunity.status = status;
     //update flyer status to active/inactive to reflect the opportunity status
