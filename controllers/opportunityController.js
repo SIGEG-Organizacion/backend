@@ -20,6 +20,10 @@ export const createPublication = async (req, res, next) => {
     format,
     forStudents,
   } = req.body;
+  
+  console.log('Received mode:', mode); // Verificar el valor de mode
+  console.log('Received forStudents:', forStudents); // Verificar el valor de forStudents
+
   const userId = req.user._id;
   let createdOpportunityId = null;
 
@@ -98,8 +102,6 @@ export const updateOpportunity = async (req, res, next) => {
 
 export const deleteOpportunity = async (req, res, next) => {
   const { uuid } = req.params;
-  console.log(`Attempting to delete opportunity with uuid: ${uuid}`);  // Log para depurar
-
   try {
     const result = await deleteOpportunityService(uuid);
     res.status(200).json(result);

@@ -77,7 +77,8 @@ export const uuidValidatorQuery = query("uuid")
 
 export const forStudentsValidator = body("forStudents")
   .isBoolean()
-  .withMessage("Invalid boolean value");
+  .withMessage("Invalid boolean value")
+  .toBoolean();  // Esto convierte la cadena "true"/"false" en valores booleanos
 
 // Combined validators for different routes
 export const createOpportunityValidation = [
