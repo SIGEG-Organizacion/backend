@@ -99,7 +99,7 @@ export const updateOpportunityValidation = [
   modeValidator.optional(),
   deadlineValidator.optional(),
   emailValidator.optional(),
-  forStudentsValidator,
+  forStudentsValidator.optional(),
 ];
 
 export const filterOpportunityValidator = [
