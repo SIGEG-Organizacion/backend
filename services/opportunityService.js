@@ -9,6 +9,8 @@ import { generateFlyerPDF } from "../utils/flyerGenerator.js";
 import { uploadFileToB2 } from "../utils/b2Uploader.js";
 import path from "path";
 import fs from "fs";
+import Interest from "../models/interestModel.js";
+
 
 export const createOpportunity = async (
   userId,
@@ -80,16 +82,39 @@ export const updateOpportunityFields = async (
 };
 
 export const deleteOpportunity = async (uuid) => {
-  const opportunity = await Opportunity.findOne({ uuid });
-  if (!opportunity) {
-    throw AppError.notFound("Not Found: opportunity doesn't exist");
-  }
-  await opportunity.remove();
-  const flyer = await Flyer.findOne({ opportunityId: opportunity._id });
-  if (flyer) {
-    await flyer.deleteOne();
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    // Buscar la oportunidad por UUID
+    const opportunity = await Opportunity.findOne({ uuid }).session(session);
+    if (!opportunity) {
+      throw AppError.notFound("Opportunity not found");
+    }
+
+    // Eliminar todos los intereses relacionados
+    await Interest.deleteMany({ opportunityId: opportunity._id }).session(session);
+
+    // Eliminar el flyer relacionado, si existe
+    const flyer = await Flyer.findOne({ opportunityId: opportunity._id }).session(session);
+    if (flyer) {
+      await flyer.deleteOne().session(session);
+    }
+
+    // Eliminar la oportunidad
+    await opportunity.deleteOne().session(session);
+
+    // Confirmar transacción
+    await session.commitTransaction();
+    session.endSession();
+
+    return { message: "Opportunity and associated interests and flyer deleted successfully" };
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw new Error("Error during opportunity deletion: " + error.message);
   }
 };
+
 
 export const listOpportunitiesWithName = async (company_name) => {
   const user = await User.findOne({ name: company_name }, { _id: 1 });

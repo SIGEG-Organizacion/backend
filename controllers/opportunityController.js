@@ -3,6 +3,7 @@ import {
   createOpportunity,
   listOpportunitiesWithName,
   updateOpportunityFields,
+  deleteOpportunity as deleteOpportunityService,
   getOpportunityService,
   createFlyer,
   getOpportunitiesFiltered,
@@ -21,6 +22,7 @@ export const createPublication = async (req, res, next) => {
   } = req.body;
   const userId = req.user._id;
   let createdOpportunityId = null;
+
   try {
     const opportunity = await createOpportunity(
       userId,
@@ -34,11 +36,22 @@ export const createPublication = async (req, res, next) => {
     );
 
     createdOpportunityId = opportunity._id;
-    // Crear flyer, subir a Backblaze B2 y obtener URL
-    const flyer = await createFlyer(opportunity._id, format);
-    // Guardar la URL del flyer en el documento mongoose
+    
+    // Obtener el logo desde el formulario y cargarlo
+    const logoFile = req.files.logo;
+    const logoUrl = await uploadLogoToB2(logoFile.tempFilePath, `logos/${logoFile.name}`);
+
+    // Almacenar el logo en la oportunidad
+    opportunity.logoUrl = logoUrl;
+    await opportunity.save();
+
+    // Crear el flyer con el logo y asociarlo a la oportunidad
+    const flyer = await createFlyer(opportunity._id, format, logoUrl);
+
+    // Guardar la URL del flyer en la oportunidad
     opportunity.flyerUrl = flyer.url;
     await opportunity.save();
+
     res.status(201).json({
       message: "Opportunity created successfully",
       opportunity,
@@ -86,7 +99,7 @@ export const updateOpportunity = async (req, res, next) => {
 export const deleteOpportunity = async (req, res, next) => {
   const { uuid } = req.params;
   try {
-    await deleteOpportunity(uuid);
+    await deleteOpportunityService(uuid);
     res.status(200).json({ message: "Opportunity deleted successfully" });
   } catch (err) {
     next(err);

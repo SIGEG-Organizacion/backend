@@ -39,24 +39,13 @@ export const registerUser = async (req, res, next) => {
 };
 
 export const createCompanyUser = async (req, res, next) => {
-  console.log(req.files);
-  console.log("Datos del cuerpo de la solicitud:", req.body);
-
-  if (!req.files || !req.files.logo) {
-    return res.status(400).json({ message: "Logo is required" });
-  }
   const { email, sector, address } = req.body;
-  const logoFile = req.files.logo;  // El archivo del logo
 
   try {
-    // Subir el logo a Backblaze B2 y obtener la URL
-    const logoUrl = await uploadLogoToB2(logoFile.tempFilePath, `logos/${logoFile.name}`);
-
-    // Crear la compañía con la URL del logo
-    await createCompany(email, sector, address, logoUrl);
+    await createCompany(email, sector, address);
 
     res.status(201).json({
-      message: "User role assignment and company creation successful",
+      message: "Company created successfully",
     });
   } catch (err) {
     next(err);

@@ -87,6 +87,10 @@ const opportunitySchema = new mongoose.Schema({
     type: Boolean,
     required: true,
   },
+  logoUrl: {
+    type: String,
+    required: false,
+  },
 });
 
 // Middleware para eliminar los intereses relacionados cuando la oportunidad se elimina
