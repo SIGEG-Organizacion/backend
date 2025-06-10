@@ -1,2 +1,4 @@
 .env 
 node?modules
+
+client_secrets*.sjon
