@@ -5,6 +5,7 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import { connectDB } from "./config/db.js";
 import userRoutes from "./routes/userRoutes.js";
+import calendarRoutes from "./routes/calendarRoutes.js";
 import opportunityRoutes from "./routes/opportunityRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import interestRoutes from "./routes/interestRoutes.js";
@@ -27,7 +28,7 @@ const apiLimiter = rateLimit({
 // Middlewares
 app.use(helmet());
 app.use(cors({ origin: process.env.CLIENT_URL }));
-app.use(express.json({ limit: "10kb" }));
+app.use(express.json({ limit: "30kb" }));
 app.use(morgan("dev"));
 app.use("/", apiLimiter);
 
@@ -37,7 +38,9 @@ connectDB();
 startOpportunityCleanupJob();
 
 // Routes
+
 app.use("/api/users", userRoutes);
+app.use("/api/calendar", calendarRoutes);
 app.use("/api/opportunities", opportunityRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/interests", interestRoutes);
