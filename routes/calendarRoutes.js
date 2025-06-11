@@ -47,7 +47,7 @@ router.get("/google/auth", (req, res) => {
 });
 
 router.get("/google/callback", async (req, res, next) => {
-  const { code } = req.query;
+  const { code } = req.query.code;
   try {
     console.log(
       "OAuth2 Client Config:\n",
