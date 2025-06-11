@@ -41,9 +41,8 @@ router.get("/google/auth", (req, res) => {
 });
 
 router.get("/google/callback", async (req, res, next) => {
-  console.log("callback… query got:", req.query);
   console.log("Local server time:", new Date().toISOString());
-  const { code } = req.query;
+  const { code } = req.query.code;
 
   try {
     const { tokens } = await oauth2Client.getToken(code);
