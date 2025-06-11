@@ -40,6 +40,7 @@ router.get(
       ],
       prompt: "consent",
     });
+    console.log("Url generado es:", url);
     res.redirect(url);
   }
 );
@@ -50,14 +51,7 @@ router.get("/google/callback", async (req, res, next) => {
   const { code } = req.query;
 
   try {
-    // 1) Intercambiar code por tokens, asegurándote de usar redirect_uri
-    const response = await oauth2Client.getToken({
-      code,
-      redirect_uri: process.env.GOOGLE_REDIRECT_URI,
-    });
-
-    // 2) Extraer los tokens correctamente
-    const tokens = response.tokens;
+    const { tokens } = await oauth2Client.getToken(code);
     console.log("TOKENS:", tokens);
     console.log("USER:", req.user.name);
 
