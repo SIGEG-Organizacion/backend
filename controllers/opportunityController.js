@@ -14,9 +14,11 @@ import fs from 'fs';
 
 export const createPublication = async (req, res, next) => {
   const { description, requirements, benefits, mode, deadline, email, format, forStudents } = req.body;
-  const userId = req.user._id;
-  let createdOpportunityId = null;
 
+  // Log para verificar el valor de forStudents
+  console.log("Received forStudents:", forStudents);
+  const userId = req.user._id;
+  
   try {
     // Crear la oportunidad
     const opportunity = await createOpportunity(
@@ -27,29 +29,24 @@ export const createPublication = async (req, res, next) => {
       mode,
       deadline,
       email,
-      forStudents
+      forStudents 
     );
-
-    createdOpportunityId = opportunity._id;
-
-    // Verifica si se recibió un archivo
-    console.log("File in request:", req.file); // Log para depurar
-
+    
+    // Lógica para procesar el logo si se ha adjuntado
     let logoUrl = null;
     if (req.file) {
-      // Si se adjunta un logo, se sube a B2
       const logoFile = req.file;
       logoUrl = await uploadLogoToB2(logoFile.path, `logos/${logoFile.filename}`);
-      
-      // Eliminar el archivo temporal después de subirlo
-      fs.unlinkSync(logoFile.path);
+
+      // Eliminar archivo temporal después de subirlo
+      fs.unlinkSync(logoFile.path); // Elimina el archivo temporal local
 
       // Guardar la URL del logo en la oportunidad
       opportunity.logoUrl = logoUrl;
       await opportunity.save();
     }
 
-    // Crear el flyer
+    // Crear el flyer, incluso si no se sube logo
     const flyer = await createFlyer(opportunity._id, format, logoUrl);
 
     // Guardar la URL del flyer en la oportunidad
@@ -62,7 +59,6 @@ export const createPublication = async (req, res, next) => {
       flyer,
     });
   } catch (err) {
-    await Opportunity.findByIdAndDelete(createdOpportunityId);
     next(err);
   }
 };

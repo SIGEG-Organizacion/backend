@@ -1,5 +1,6 @@
 // services/flyerService.js
 import { generateFlyerPDF } from "../utils/flyerGenerator.js";
+import Opportunity from "../models/opportunityModel.js";
 
 export const createFlyer = async (opportunityId, format, logoUrl) => {
   const opportunity = await Opportunity.findById(opportunityId).populate({

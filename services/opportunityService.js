@@ -22,7 +22,7 @@ export const createOpportunity = async (
   mode,
   deadline,
   email,
-  forStudents
+  forStudents 
 ) => {
   const opportunityExists = await Opportunity.findOne({
     description: description,
@@ -30,14 +30,11 @@ export const createOpportunity = async (
   if (opportunityExists) {
     throw AppError.conflict("Conflict: Opportunity already exists");
   }
-
-  // Verificar si la empresa existe
   const companyExists = await Company.findOne({ userId });
   if (!companyExists) {
-    throw AppError.notFound("Not Found: Company doesn't exist");
+    throw AppError.notFound("Not Found: Company doesnt exists");
   }
 
-  // Crear la nueva oportunidad
   const opportunity = new Opportunity({
     companyId: companyExists._id,
     description,
@@ -45,16 +42,15 @@ export const createOpportunity = async (
     benefits,
     mode,
     deadline: new Date(deadline),
-    contact: email,
-    status: "pending-approval",
+    email,
+    status: "pending-approval",  
     uuid: uuidv4(),
-    forStudents,
+    forStudents, 
   });
 
-  await opportunity.save(); // Guardar la oportunidad en la base de datos
+  await opportunity.save();
   return opportunity;
 };
-
 
 
 export const updateOpportunityFields = async (
