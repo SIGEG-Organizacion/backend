@@ -41,26 +41,19 @@ router.get("/google/auth", (req, res) => {
 });
 
 router.get("/google/callback", async (req, res, next) => {
-  console.log("Local server time:", new Date().toISOString());
-  const { code } = req.query.code;
-
+  const { code } = req.query;
   try {
-    console.log("TOKENS:");
-    console.log(process.env.GOOGLE_CLIENT_ID);
-    console.log(process.env.GOOGLE_CLIENT_SECRET);
-    console.log(process.env.GOOGLE_REDIRECT_URI);
-    const { tokens } = await oauth2Client.getToken(code);
+    const { tokens } = await oauth2Client.getToken({
+      code,
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
+      client_redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+    });
     console.log("TOKENS:", tokens);
-    console.log("USER:", req.user.name);
-    //oauth2Client.setCredentials(tokens);
-    // 3) Guardar en BD
     await saveGoogleTokens(req.user._id, tokens);
-
-    // 4) Responder al navegador
-    res.send("Google Calendar conectado correctamente!");
+    res.send("¡Conectado!");
   } catch (err) {
-    // Imprime el error completo para depurar
-    console.error("Error in callback handler:", err.response?.data || err);
+    console.error("OAuth callback error:", err.response?.data || err);
     next(err);
   }
 });
