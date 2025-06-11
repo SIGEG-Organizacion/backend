@@ -46,8 +46,6 @@ router.get(
 
 router.get(
   "/google/callback",
-  protect,
-  authorizeRoles("adminLink", "vadminTFG"),
   async (req, res, next) => {
     try {
       const { code } = req.query;
