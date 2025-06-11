@@ -8,7 +8,6 @@ import {
   requestIdParamValidator,
 } from "../validators/calendarValidator.js";
 import { oauth2Client } from "../config/googleClient.js";
-import Calendar from "../models/calendarModel.js";
 import { protect, authorizeRoles } from "../middlewares/authMiddleware.js";
 import { validateRequest } from "../middlewares/validatorMiddleware.js";
 import {
@@ -20,6 +19,8 @@ import {
   denyRequest,
   approveRequest,
   getRequests,
+  saveGoogleTokens,
+  listGoogleEvents,
 } from "../controllers/calendarController.js";
 
 const router = express.Router();
