@@ -7,7 +7,6 @@ import {
   getOpportunityService,
   createFlyer,
   getOpportunitiesFiltered,
-  deleteOpportunityEntry,
 } from "../services/opportunityService.js";
 
 export const createPublication = async (req, res, next) => {

@@ -19,8 +19,8 @@ import {
   denyRequest,
   approveRequest,
   getRequests,
-  saveGoogleTokens,
-  listGoogleEvents,
+  //saveGoogleTokens,
+  //listGoogleEvents,
 } from "../controllers/calendarController.js";
 
 const router = express.Router();
