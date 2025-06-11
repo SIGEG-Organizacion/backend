@@ -45,6 +45,7 @@ router.get("/google/callback", async (req, res, next) => {
   const { code } = req.query.code;
 
   try {
+    console.log("TOKENS:");
     const { tokens } = await oauth2Client.getToken(code);
     console.log("TOKENS:", tokens);
     console.log("USER:", req.user.name);
