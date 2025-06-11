@@ -18,7 +18,6 @@ export const createOpportunity = async (
   mode,
   deadline,
   email,
-  email,
   forStudents
 ) => {
   const opportunityExists = await Opportunity.findOne({
@@ -38,7 +37,6 @@ export const createOpportunity = async (
     benefits,
     mode,
     deadline: new Date(deadline),
-    email,
     email,
     status: "pending-approval",
     uuid: uuidv4(),
