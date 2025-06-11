@@ -32,11 +32,13 @@ async function getAuthClient(userId) {
 
 export const saveGoogleTokens = async (userId, tokens) => {
   let rec = await Calendar.findOne({ userId, provider: "google" });
+  console.log("new calendar");
   if (!rec) rec = new Calendar({ userId, provider: "google" });
 
   rec.accessToken = tokens.access_token;
   rec.refreshToken = tokens.refresh_token;
   rec.tokenExpiry = tokens.expiry_date;
+  console.log("saving...");
   await rec.save();
 };
 
