@@ -24,10 +24,15 @@ import {
   listGoogleEvents,
   saveGoogleTokens,
 } from "../services/calendar/googleCalendarService.js";
+import util from "util";
 
 const router = express.Router();
 
 router.get("/google/auth", (req, res) => {
+  console.log(
+    "OAuth2 Client Config:\n",
+    util.inspect(oauth2Client, { showHidden: true, depth: 1 })
+  );
   const url = oauth2Client.generateAuthUrl({
     access_type: "offline",
     scope: [
@@ -35,6 +40,7 @@ router.get("/google/auth", (req, res) => {
       "https://www.googleapis.com/auth/calendar.events",
     ],
     prompt: "consent",
+    redirect_uri: process.env.GOOGLE_REDIRECT_URI,
   });
   console.log("Url generado es:", url);
   res.redirect(url);
@@ -43,14 +49,13 @@ router.get("/google/auth", (req, res) => {
 router.get("/google/callback", async (req, res, next) => {
   const { code } = req.query;
   try {
-    const { tokens } = await oauth2Client.getToken({
-      code,
-      client_id: process.env.GOOGLE_CLIENT_ID,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET,
-      client_redirect_uri: process.env.GOOGLE_REDIRECT_URI,
-    });
-    console.log("TOKENS:", tokens);
-    await saveGoogleTokens(req.user._id, tokens);
+    console.log(
+      "OAuth2 Client Config:\n",
+      util.inspect(oauth2Client, { showHidden: true, depth: 1 })
+    );
+    const tokens = await oauth2Client.getToken(code);
+    //console.log("TOKENS:", tokens);
+    //await saveGoogleTokens(req.user._id, tokens);
     res.send("¡Conectado!");
   } catch (err) {
     console.error("OAuth callback error:", err.response?.data || err);
