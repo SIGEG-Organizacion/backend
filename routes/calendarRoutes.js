@@ -40,7 +40,7 @@ router.get("/google/auth", (req, res) => {
       "https://www.googleapis.com/auth/calendar.events",
     ],
     prompt: "consent",
-    redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+    //redirect_uri: process.env.GOOGLE_REDIRECT_URI,
   });
   console.log("Url generado es:", url);
   res.redirect(url);

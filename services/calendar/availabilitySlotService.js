@@ -112,8 +112,6 @@ export const listAvailabilitySlotsByAdmin = async (userEmail) => {
     .select("date startTime endTime createdAt updatedAt")
     .sort({ date: 1, startTime: 1 });
 
-  console.log("gay");
-
   return slots.map((s) => ({
     date: s.date.toISOString().split("T")[0],
     startTime: s.startTime,
