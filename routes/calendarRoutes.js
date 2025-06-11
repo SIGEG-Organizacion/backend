@@ -46,9 +46,9 @@ router.get("/google/callback", async (req, res, next) => {
 
   try {
     const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
     console.log("TOKENS:", tokens);
     console.log("USER:", req.user.name);
-
     // 3) Guardar en BD
     await saveGoogleTokens(req.user._id, tokens);
 
