@@ -16,7 +16,11 @@ import rateLimit from "express-rate-limit";
 // Load env variables
 dotenv.config();
 
-const app = express();
+const app = express([
+  "https://backend-5e8v.onrender.com/",
+  "https://localhost:5000",
+  "https://localhost:5147",
+]);
 
 //limit request
 const apiLimiter = rateLimit({
