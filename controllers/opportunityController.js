@@ -46,7 +46,6 @@ export const createPublication = async (req, res, next) => {
       await opportunity.save();
     }
 
-    // Crear el flyer, incluso si no se sube logo
     const flyer = await createFlyer(opportunity._id, format, logoUrl);
 
     // Guardar la URL del flyer en la oportunidad

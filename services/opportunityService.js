@@ -13,7 +13,6 @@ import fs from "fs";
 import Interest from "../models/interestModel.js";
 
 
-
 export const createOpportunity = async (
   userId,
   description,
@@ -119,8 +118,6 @@ export const deleteOpportunity = async (uuid) => {
     throw new Error("Error during opportunity deletion: " + error.message);
   }
 };
-
-
 
 
 export const listOpportunitiesWithName = async (company_name) => {
