@@ -17,7 +17,7 @@ function encrypt(text) {
 function decrypt(encrypted) {
   const original = "my-token-value";
   const encryptedTest = encrypt(original);
-  const decryptedtest = decrypt(encrypted);
+  const decryptedtest = decrypt(encryptedTest);
   console.assert(encryptedTest === decryptedtest, "Decrypt failed");
   const [ivStr, data] = encrypted.split(":");
   const iv = Buffer.from(ivStr, "base64");
