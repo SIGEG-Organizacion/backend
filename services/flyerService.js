@@ -12,11 +12,22 @@ export const createFlyer = async (opportunityId, format, logoUrl) => {
 
   const outputPath = path.resolve(`./temp/flyer_${opportunity.uuid}.${format}`);
 
-  await generateFlyerPDF(opportunity, logoUrl, outputPath);
+  // Verificar que la carpeta temporal exista, si no, crearla
+  if (!fs.existsSync(path.resolve("./temp"))) {
+    fs.mkdirSync(path.resolve("./temp"));
+  }
+
+  // Generar el PDF
+  await generateFlyerPDF(
+    opportunity,
+    logoUrl,
+    outputPath
+  );
 
   const fileName = `flyers/flyer_${opportunity.uuid}.${format}`;
   const signedUrl = await uploadFileToB2(outputPath, fileName);
 
+  // Crear o actualizar el documento de flyer en MongoDB
   let flyer = await Flyer.findOne({ opportunityId });
   if (!flyer) {
     flyer = new Flyer({
@@ -36,4 +47,5 @@ export const createFlyer = async (opportunityId, format, logoUrl) => {
 
   return flyer;
 };
+
 

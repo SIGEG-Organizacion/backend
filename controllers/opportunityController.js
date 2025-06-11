@@ -1,3 +1,4 @@
+//controllers/opportunityController.js
 import Opportunity from "../models/opportunityModel.js";
 import {
   createOpportunity,
@@ -5,9 +6,11 @@ import {
   updateOpportunityFields,
   deleteOpportunity as deleteOpportunityService,
   getOpportunityService,
-  createFlyer,
   getOpportunitiesFiltered,
 } from "../services/opportunityService.js";
+import { uploadLogoToB2 } from "../utils/b2Uploader.js";
+import { createFlyer } from "../services/flyerService.js";
+import fs from 'fs';  
 
 export const createPublication = async (req, res, next) => {
   const { description, requirements, benefits, mode, deadline, email, format, forStudents } = req.body;
@@ -15,22 +18,38 @@ export const createPublication = async (req, res, next) => {
   let createdOpportunityId = null;
 
   try {
-    // Verificar la creación de la oportunidad
+    // Crear la oportunidad
     const opportunity = await createOpportunity(
-      userId, description, requirements, benefits, mode, deadline, email, forStudents
+      userId,
+      description,
+      requirements,
+      benefits,
+      mode,
+      deadline,
+      email,
+      forStudents
     );
 
     createdOpportunityId = opportunity._id;
 
-    // Obtener el logo desde el formulario y cargarlo
-    const logoFile = req.files.logo;
-    const logoUrl = await uploadLogoToB2(logoFile.tempFilePath, `logos/${logoFile.name}`);
+    // Verifica si se recibió un archivo
+    console.log("File in request:", req.file); // Log para depurar
 
-    // Almacenar el logo en la oportunidad
-    opportunity.logoUrl = logoUrl;
-    await opportunity.save();
+    let logoUrl = null;
+    if (req.file) {
+      // Si se adjunta un logo, se sube a B2
+      const logoFile = req.file;
+      logoUrl = await uploadLogoToB2(logoFile.path, `logos/${logoFile.filename}`);
+      
+      // Eliminar el archivo temporal después de subirlo
+      fs.unlinkSync(logoFile.path);
 
-    // Crear el flyer con el logo y asociarlo a la oportunidad
+      // Guardar la URL del logo en la oportunidad
+      opportunity.logoUrl = logoUrl;
+      await opportunity.save();
+    }
+
+    // Crear el flyer
     const flyer = await createFlyer(opportunity._id, format, logoUrl);
 
     // Guardar la URL del flyer en la oportunidad
@@ -47,7 +66,6 @@ export const createPublication = async (req, res, next) => {
     next(err);
   }
 };
-
 
 export const updateOpportunity = async (req, res, next) => {
   const { uuid } = req.params;

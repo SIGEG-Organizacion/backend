@@ -23,7 +23,6 @@ import {
 } from "../validators/usersValidator.js";
 import { validateRequest } from "../middlewares/validatorMiddleware.js";
 import { protect, authorizeRoles } from "../middlewares/authMiddleware.js";
-import { upload } from "../middlewares/fileUpload.js"; 
 import User from "../models/userModel.js";
 import { AppError } from "../utils/AppError.js";
 import rateLimit from "express-rate-limit";
@@ -45,7 +44,6 @@ router.post(
 router.post(
   "/createCompany",
   validateRequest(validateCreateCompany),
-  upload,
   createCompanyUser
 );
 router.post("/login", validateRequest(validateLogin), loginUser);

@@ -1,4 +1,4 @@
-
+//routes/opportunityRoutes.js
 import express from "express";
 import {
   createPublication,
@@ -18,7 +18,8 @@ import {
 } from "../validators/opportunityValidator.js";
 import { protect, authorizeRoles } from "../middlewares/authMiddleware.js";
 import { query } from "express-validator";
-import fileUpload from '../middlewares/fileUpload.js';  
+import { upload } from '../middlewares/fileUpload.js';
+
 const router = express.Router();
 
 router.post(

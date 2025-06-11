@@ -58,9 +58,9 @@ const opportunitySchema = new mongoose.Schema({
     required: true,
     enum: ["remote", "on-site", "hybrid"],
   },
-  contact: {
+  email: {
     type: String,
-    required: true,
+    required: true,  
     validate: {
       validator: function (v) {
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -96,7 +96,6 @@ const opportunitySchema = new mongoose.Schema({
 // Middleware para eliminar los intereses relacionados cuando la oportunidad se elimina
 opportunitySchema.pre('remove', async function(next) {
   try {
-    console.log(`Deleting interests associated with opportunity ${this._id}`);  // Log para depurar
     await Interest.deleteMany({ opportunityId: this._id });
     next();
   } catch (err) {

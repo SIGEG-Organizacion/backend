@@ -1,3 +1,4 @@
+//services/opportunityService.js
 import mongoose from "mongoose";
 import { AppError } from "../utils/AppError.js";
 import Opportunity from "../models/opportunityModel.js";
@@ -12,6 +13,7 @@ import fs from "fs";
 import Interest from "../models/interestModel.js";
 
 
+
 export const createOpportunity = async (
   userId,
   description,
@@ -19,7 +21,7 @@ export const createOpportunity = async (
   benefits,
   mode,
   deadline,
-  contact,
+  email,
   forStudents
 ) => {
   const opportunityExists = await Opportunity.findOne({
@@ -28,11 +30,14 @@ export const createOpportunity = async (
   if (opportunityExists) {
     throw AppError.conflict("Conflict: Opportunity already exists");
   }
+
+  // Verificar si la empresa existe
   const companyExists = await Company.findOne({ userId });
   if (!companyExists) {
-    throw AppError.notFound("Not Found: Company doesnt exists");
+    throw AppError.notFound("Not Found: Company doesn't exist");
   }
 
+  // Crear la nueva oportunidad
   const opportunity = new Opportunity({
     companyId: companyExists._id,
     description,
@@ -40,15 +45,16 @@ export const createOpportunity = async (
     benefits,
     mode,
     deadline: new Date(deadline),
-    contact,
+    contact: email,
     status: "pending-approval",
     uuid: uuidv4(),
     forStudents,
   });
 
-  await opportunity.save();
+  await opportunity.save(); // Guardar la oportunidad en la base de datos
   return opportunity;
 };
+
 
 
 export const updateOpportunityFields = async (
