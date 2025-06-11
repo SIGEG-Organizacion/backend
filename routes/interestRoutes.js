@@ -1,4 +1,5 @@
 // routes/interestRoutes.js
+console.log("📆 interest loaded");
 import express from "express";
 import {
   markInterest,

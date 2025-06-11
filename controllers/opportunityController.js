@@ -7,6 +7,7 @@ import {
   getOpportunityService,
   createFlyer,
   getOpportunitiesFiltered,
+  deleteOpportunityEntry,
 } from "../services/opportunityService.js";
 
 export const createPublication = async (req, res, next) => {
@@ -78,7 +79,7 @@ export const updateOpportunity = async (req, res, next) => {
     email,
     status,
     forStudents,
-  } = req.body;
+  } = req.body || {};
   try {
     const updated = await updateOpportunityFields(
       uuid,
