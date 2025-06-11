@@ -45,29 +45,29 @@ router.get(
 );
 
 router.get("/google/callback", async (req, res, next) => {
-  console.log("callback... query got:", req.query);
+  console.log("callback… query got:", req.query);
   const { code } = req.query;
-  console.assert(decrypted === original, "Decrypt failed");
+
   try {
-    let tokens;
-    try {
-      const { tokens } = await oauth2Client.getToken({
-        code,
-        redirect_uri: process.env.GOOGLE_REDIRECT_URI,
-      });
-      tokens = resp.tokens;
-    } catch (tokenErr) {
-      console.error(
-        "Error in getToken():",
-        tokenErr.response?.data || tokenErr
-      );
-      throw tokenErr; // rethrow for outer catch
-    }
-    console.log(tokens);
-    console.log(req.user.name);
+    // 1) Intercambiar code por tokens, asegurándote de usar redirect_uri
+    const response = await oauth2Client.getToken({
+      code,
+      redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+    });
+
+    // 2) Extraer los tokens correctamente
+    const tokens = response.tokens;
+    console.log("TOKENS:", tokens);
+    console.log("USER:", req.user.name);
+
+    // 3) Guardar en BD
     await saveGoogleTokens(req.user._id, tokens);
+
+    // 4) Responder al navegador
     res.send("Google Calendar conectado correctamente!");
   } catch (err) {
+    // Imprime el error completo para depurar
+    console.error("Error in callback handler:", err.response?.data || err);
     next(err);
   }
 });
