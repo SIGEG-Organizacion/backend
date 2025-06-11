@@ -56,7 +56,6 @@ export const updateOpportunityFields = async (
   mode,
   deadline,
   email,
-  email,
   status,
   forStudents
 ) => {
