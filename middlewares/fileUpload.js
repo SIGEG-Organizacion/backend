@@ -1,9 +1,17 @@
 // middlewares/fileUpload.js
+import multer from 'multer';
+import path from 'path';
 
-import fileUpload from "express-fileupload";
-
-// Configuración del middleware
-export const upload = fileUpload({
-  createParentPath: true, // Crear carpetas si no existen
-  limits: { fileSize: 50 * 1024 * 1024 }, // Limitar el tamaño de los archivos (50MB)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');  // Carpeta donde se guardarán los archivos
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);  // Nombre único para el archivo
+  },
 });
+
+const upload = multer({ storage });
+
+// Exporta el middleware upload
+export default upload;

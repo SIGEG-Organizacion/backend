@@ -10,13 +10,10 @@ export const createFlyer = async (opportunityId, format, logoUrl) => {
     throw new Error("Opportunity not found");
   }
 
-  // Ruta temporal del flyer
   const outputPath = path.resolve(`./temp/flyer_${opportunity.uuid}.${format}`);
 
-  // Generar el flyer con el logo
   await generateFlyerPDF(opportunity, logoUrl, outputPath);
 
-  // Subir el archivo y obtener la URL firmada
   const fileName = `flyers/flyer_${opportunity.uuid}.${format}`;
   const signedUrl = await uploadFileToB2(outputPath, fileName);
 
@@ -26,16 +23,17 @@ export const createFlyer = async (opportunityId, format, logoUrl) => {
       opportunityId,
       status: "active",
       format,
-      url: signedUrl, // URL del flyer
+      url: signedUrl,
       content: opportunity.description,
     });
   } else {
-    flyer.url = signedUrl; // Actualizamos la URL
+    flyer.url = signedUrl;
     flyer.status = "active";
   }
 
   await flyer.save();
-  fs.unlinkSync(outputPath); // Eliminar archivo temporal
+  fs.unlinkSync(outputPath);
 
   return flyer;
 };
+

@@ -10,37 +10,18 @@ import {
 } from "../services/opportunityService.js";
 
 export const createPublication = async (req, res, next) => {
-  const {
-    description,
-    requirements,
-    benefits,
-    mode,
-    deadline,
-    email,
-    format,
-    forStudents,
-  } = req.body;
-  
-  console.log('Received mode:', mode); // Verificar el valor de mode
-  console.log('Received forStudents:', forStudents); // Verificar el valor de forStudents
-
+  const { description, requirements, benefits, mode, deadline, email, format, forStudents } = req.body;
   const userId = req.user._id;
   let createdOpportunityId = null;
 
   try {
+    // Verificar la creación de la oportunidad
     const opportunity = await createOpportunity(
-      userId,
-      description,
-      requirements,
-      benefits,
-      mode,
-      deadline,
-      email,
-      forStudents
+      userId, description, requirements, benefits, mode, deadline, email, forStudents
     );
 
     createdOpportunityId = opportunity._id;
-    
+
     // Obtener el logo desde el formulario y cargarlo
     const logoFile = req.files.logo;
     const logoUrl = await uploadLogoToB2(logoFile.tempFilePath, `logos/${logoFile.name}`);
@@ -66,6 +47,7 @@ export const createPublication = async (req, res, next) => {
     next(err);
   }
 };
+
 
 export const updateOpportunity = async (req, res, next) => {
   const { uuid } = req.params;

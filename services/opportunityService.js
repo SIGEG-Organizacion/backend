@@ -32,6 +32,7 @@ export const createOpportunity = async (
   if (!companyExists) {
     throw AppError.notFound("Not Found: Company doesnt exists");
   }
+
   const opportunity = new Opportunity({
     companyId: companyExists._id,
     description,
@@ -44,9 +45,11 @@ export const createOpportunity = async (
     uuid: uuidv4(),
     forStudents,
   });
+
   await opportunity.save();
   return opportunity;
 };
+
 
 export const updateOpportunityFields = async (
   uuid,
