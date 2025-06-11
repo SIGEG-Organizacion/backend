@@ -47,6 +47,7 @@ router.get(
 router.get("/google/callback", async (req, res, next) => {
   console.log("callback... query got:", req.query);
   const { code } = req.query;
+  console.assert(decrypted === original, "Decrypt failed");
   try {
     let tokens;
     try {
