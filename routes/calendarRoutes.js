@@ -33,6 +33,10 @@ router.get("/google/auth", (req, res) => {
     "OAuth2 Client Config:\n",
     util.inspect(oauth2Client, { showHidden: true, depth: 1 })
   );
+  const state = crypto.randomBytes(32).toString("hex");
+
+  // Store state in the session
+  req.session.state = state;
   const url = oauth2Client.generateAuthUrl({
     access_type: "offline",
     scope: [
@@ -40,7 +44,9 @@ router.get("/google/auth", (req, res) => {
       "https://www.googleapis.com/auth/calendar.events",
     ],
     prompt: "consent",
-    //redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+    include_granted_scopes: true,
+    redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+    state: state,
   });
   console.log("Url generado es:", url);
   res.redirect(url);
