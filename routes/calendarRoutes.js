@@ -27,23 +27,18 @@ import {
 
 const router = express.Router();
 
-router.get(
-  "/google/auth",
-  protect,
-  authorizeRoles("adminLink", "vadminTFG"),
-  (req, res) => {
-    const url = oauth2Client.generateAuthUrl({
-      access_type: "offline",
-      scope: [
-        "https://www.googleapis.com/auth/calendar.events.readonly",
-        "https://www.googleapis.com/auth/calendar.events",
-      ],
-      prompt: "consent",
-    });
-    console.log("Url generado es:", url);
-    res.redirect(url);
-  }
-);
+router.get("/google/auth", (req, res) => {
+  const url = oauth2Client.generateAuthUrl({
+    access_type: "offline",
+    scope: [
+      "https://www.googleapis.com/auth/calendar.events.readonly",
+      "https://www.googleapis.com/auth/calendar.events",
+    ],
+    prompt: "consent",
+  });
+  console.log("Url generado es:", url);
+  res.redirect(url);
+});
 
 router.get("/google/callback", async (req, res, next) => {
   console.log("callback… query got:", req.query);
