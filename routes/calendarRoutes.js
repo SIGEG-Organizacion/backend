@@ -53,7 +53,16 @@ router.get("/google/callback", async (req, res, next) => {
       "OAuth2 Client Config:\n",
       util.inspect(oauth2Client, { showHidden: true, depth: 1 })
     );
-    const tokens = await oauth2Client.getToken(code);
+    const payload = {
+      code,
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
+      redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+      grant_type: "authorization_code",
+    };
+
+    const tokenResponse = await oauth2Client.getToken(payload);
+    const tokens = tokenResponse.tokens;
     //console.log("TOKENS:", tokens);
     //await saveGoogleTokens(req.user._id, tokens);
     res.send("¡Conectado!");
