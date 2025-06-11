@@ -1,0 +1,19 @@
+name: Ping Backend para mantenerlo despierto
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hacer ping a la ruta de salud
+        run: |
+          status_code=$(curl -o /dev/null -s -w "%{http_code}" https://backend-5e8v.onrender.com/health)
+          echo "Ping result: $status_code"
+          if [ "$status_code" -ne 200 ]; then
+            echo "::error ::Endpoint de salud respondió $status_code"
+            exit 1
+          fi
