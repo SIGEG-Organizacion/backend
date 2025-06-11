@@ -1,6 +1,8 @@
 import AvailabilitySlot from "../../models/availabilitySlotModel.js";
 import { AppError } from "../../utils/AppError.js";
 import User from "../../models/userModel.js";
+import { google } from "googleapis";
+import { getAuthClient } from "./googleCalendarService.js";
 
 export const createAvailabilitySlot = async (
   adminId,
@@ -104,20 +106,48 @@ export const deleteAvailabilitySlot = async (adminId, slotId) => {
 
 export const listAvailabilitySlotsByAdmin = async (userEmail) => {
   const user = await User.findOne({ email: userEmail }).select("_id");
-  if (!user) {
-    throw AppError.notFound("User not found");
-  }
+  if (!user) throw AppError.notFound("User not found");
 
+  // 2) Trae todos los slots de ese admin
   const slots = await AvailabilitySlot.find({ adminId: user._id })
     .select("date startTime endTime createdAt updatedAt")
     .sort({ date: 1, startTime: 1 });
 
-  return slots.map((s) => ({
-    date: s.date.toISOString().split("T")[0],
-    startTime: s.startTime,
-    endTime: s.endTime,
-    id: s._id,
-    createdAt: s.createdAt,
-    updatedAt: s.updatedAt,
-  }));
+  if (!slots.length) return [];
+
+  const auth = await getAuthClient(user._id);
+  const calendar = google.calendar({ version: "v3", auth });
+  const tzOffset = "-06:00";
+
+  const checks = slots.map(async (s) => {
+    const day = s.date.toISOString().split("T")[0];
+    const startIso = `${day}T${s.startTime}:00${tzOffset}`;
+    const endIso = `${day}T${s.endTime}:00${tzOffset}`;
+
+    const resp = await calendar.events.list({
+      calendarId: "primary",
+      timeMin: startIso,
+      timeMax: endIso,
+      singleEvents: true,
+      orderBy: "startTime",
+    });
+
+    const hasConflict = (resp.data.items || []).length > 0;
+    return hasConflict ? null : s;
+  });
+
+  const results = await Promise.all(checks);
+  const freeSlots = results.filter((s) => s !== null);
+
+  return freeSlots.map((s) => {
+    const day = s.date.toISOString().split("T")[0];
+    return {
+      id: s._id.toString(),
+      date: day,
+      startTime: s.startTime,
+      endTime: s.endTime,
+      createdAt: s.createdAt.toISOString(),
+      updatedAt: s.updatedAt.toISOString(),
+    };
+  });
 };

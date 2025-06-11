@@ -58,33 +58,38 @@ export const deleteMeetingRequest = async (adminId, requestId) => {
 };
 
 export const acceptMeetingRequest = async (adminId, requestId) => {
-  const req = await MeetingRequest.findOne({ _id: requestId, adminId });
-  if (!req) throw AppError.notFound("Request no encontrada");
+  // 1) Buscar la solicitud
+  const reqDoc = await MeetingRequest.findOne({ _id: requestId, adminId });
+  if (!reqDoc) throw AppError.notFound("Request no encontrada");
 
-  const comp = await Company.findById(req.companyId).populate(
+  // 2) Email de la compañía (invitado)
+  const comp = await Company.findById(reqDoc.companyId).populate(
     "userId",
     "email"
   );
   const companyEmail = comp.userId.email;
 
-  const dateStr = req.requestDate.toISOString().split("T")[0];
-  const startDateTime = `${dateStr}T${req.startTime}:00`;
-  const endDateTime = `${dateStr}T${req.endTime}:00`;
+  // 3) Construir los ISO con sufijo -06:00 (Costa Rica)
+  const dateStr = reqDoc.requestDate.toISOString().split("T")[0];
+  const tzOffset = "-06:00";
+  const startIso = `${dateStr}T${reqDoc.startTime}:00${tzOffset}`;
+  const endIso = `${dateStr}T${reqDoc.endTime}:00${tzOffset}`;
 
+  // 4) Crear el evento en Google Calendar
   const event = await createGoogleEvent(adminId, {
     summary: `Reunión con ${companyEmail}${
-      req.description ? ` – ${req.description}` : ""
+      reqDoc.description ? ` – ${reqDoc.description}` : ""
     }`,
-    start: startDateTime,
-    end: endDateTime,
+    start: startIso,
+    end: endIso,
     attendees: [companyEmail],
   });
 
   return {
     eventId: event.id,
     summary: event.summary,
-    start: startDateTime,
-    end: endDateTime,
+    start: startIso,
+    end: endIso,
   };
 };
 

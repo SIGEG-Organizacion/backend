@@ -30,6 +30,10 @@ const calendarSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    email: {
+      type: String,
+      required: true,
+    },
     provider: {
       type: String,
       enum: ["google", "microsoft"],
@@ -43,7 +47,7 @@ const calendarSchema = new mongoose.Schema(
     },
     refreshToken: {
       type: String,
-      required: true,
+      //required: true,
       get: decrypt,
       set: encrypt,
     },

@@ -24,56 +24,53 @@ import {
   listGoogleEvents,
   saveGoogleTokens,
 } from "../services/calendar/googleCalendarService.js";
-import util from "util";
+import { google } from "googleapis";
 
 const router = express.Router();
 
-router.get("/google/auth", (req, res) => {
-  console.log(
-    "OAuth2 Client Config:\n",
-    util.inspect(oauth2Client, { showHidden: true, depth: 1 })
-  );
-  const state = crypto.randomBytes(32).toString("hex");
-
-  // Store state in the session
-  req.session.state = state;
-  const url = oauth2Client.generateAuthUrl({
-    access_type: "offline",
-    scope: [
-      "https://www.googleapis.com/auth/calendar.events.readonly",
-      "https://www.googleapis.com/auth/calendar.events",
-    ],
-    prompt: "consent",
-    include_granted_scopes: true,
-    redirect_uri: process.env.GOOGLE_REDIRECT_URI,
-    state: state,
-  });
-  console.log("Url generado es:", url);
-  res.redirect(url);
-});
+router.get(
+  "/google/auth",
+  protect,
+  authorizeRoles("adminLink", "vadminTFG"),
+  (req, res) => {
+    const url = oauth2Client.generateAuthUrl({
+      access_type: "offline",
+      scope: [
+        "https://www.googleapis.com/auth/calendar.events.readonly",
+        "https://www.googleapis.com/auth/calendar.events",
+      ],
+      include_granted_scopes: true,
+      prompt: "consent",
+      //redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+      state: JSON.stringify({ user: req.user }),
+    });
+    console.log("Url generado es:", url);
+    res.redirect(url);
+  }
+);
 
 router.get("/google/callback", async (req, res, next) => {
-  const { code } = req.query.code;
+  const { code, state } = req.query;
+  if (!code || !state) return res.status(400).send("Missing code or state");
+  let payload;
   try {
-    console.log(
-      "OAuth2 Client Config:\n",
-      util.inspect(oauth2Client, { showHidden: true, depth: 1 })
-    );
-    const payload = {
-      code,
-      client_id: process.env.GOOGLE_CLIENT_ID,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET,
-      redirect_uri: process.env.GOOGLE_REDIRECT_URI,
-      grant_type: "authorization_code",
-    };
+    payload = JSON.parse(state);
+  } catch {
+    return res.status(400).send("Invalid state");
+  }
 
-    const tokenResponse = await oauth2Client.getToken(payload);
-    const tokens = tokenResponse.tokens;
-    //console.log("TOKENS:", tokens);
-    //await saveGoogleTokens(req.user._id, tokens);
-    res.send("¡Conectado!");
+  try {
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
+
+    const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
+    const userInfoRes = await oauth2.userinfo.get();
+    //const googleEmail = userInfoRes.data.email;
+
+    await saveGoogleTokens(payload.user._id, "em000rodov@gmail.com", tokens);
+
+    res.send("conected");
   } catch (err) {
-    console.error("OAuth callback error:", err.response?.data || err);
     next(err);
   }
 });
