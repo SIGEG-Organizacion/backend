@@ -45,10 +45,20 @@ router.get(
 );
 
 router.get("/google/callback", async (req, res, next) => {
+  console.log("callback... query got:", req.query);
+  const { code } = req.query;
   try {
-    console.log("callback... query got:", req.query);
-    const { code } = req.query;
-    const { tokens } = await oauth2Client.getToken(code);
+    let tokens;
+    try {
+      const resp = await oauth2Client.getToken(code);
+      tokens = resp.tokens;
+    } catch (tokenErr) {
+      console.error(
+        "Error in getToken():",
+        tokenErr.response?.data || tokenErr
+      );
+      throw tokenErr; // rethrow for outer catch
+    }
     console.log(tokens);
     console.log(req.user.name);
     await saveGoogleTokens(req.user._id, tokens);
