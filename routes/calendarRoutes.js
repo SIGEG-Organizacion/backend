@@ -46,6 +46,7 @@ router.get(
 
 router.get("/google/callback", async (req, res, next) => {
   console.log("callback… query got:", req.query);
+  console.log("Local server time:", new Date().toISOString());
   const { code } = req.query;
 
   try {
