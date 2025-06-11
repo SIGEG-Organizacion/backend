@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon --es-module-specifier-resolution=node app.js",
-    "test": "mocha --recursive --timeout 5000 tests/**/*.test.js"
+    "test": "mocha --recursive --timeout 5000 tests/**/*.test.js",
+    "build": "npm install",
+    "start": "node app.js"
   },
   "keywords": [],
   "author": "",
