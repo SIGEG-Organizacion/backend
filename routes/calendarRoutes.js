@@ -51,7 +51,10 @@ router.get("/google/callback", async (req, res, next) => {
   try {
     let tokens;
     try {
-      const resp = await oauth2Client.getToken(code);
+      const { tokens } = await oauth2Client.getToken({
+        code,
+        redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+      });
       tokens = resp.tokens;
     } catch (tokenErr) {
       console.error(

@@ -16,9 +16,9 @@ function encrypt(text) {
 
 function decrypt(encrypted) {
   const original = "my-token-value";
-  const encrypted = encrypt(original);
+  const encryptedTest = encrypt(original);
   const decryptedtest = decrypt(encrypted);
-  console.assert(decrypted === original, "Decrypt failed");
+  console.assert(encryptedTest === decryptedtest, "Decrypt failed");
   const [ivStr, data] = encrypted.split(":");
   const iv = Buffer.from(ivStr, "base64");
   const decipher = crypto.createDecipheriv("aes-256-cbc", ENCRYPTION_KEY, iv);
