@@ -43,7 +43,7 @@ startOpportunityCleanupJob();
 
 // Routes
 
-app.get("/health", (req, res) => res.sendStatus(200));
+app.get("/health", (req, res) => res.sendStatus(200)); //prevent spindowns
 app.use("/api/users", userRoutes);
 app.use("/api/calendar", calendarRoutes);
 app.use("/api/opportunities", opportunityRoutes);

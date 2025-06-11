@@ -44,19 +44,18 @@ router.get(
   }
 );
 
-router.get(
-  "/google/callback",
-  async (req, res, next) => {
-    try {
-      const { code } = req.query;
-      const { tokens } = await oauth2Client.getToken(code);
-      await saveGoogleTokens(req.user._id, tokens);
-      res.send("Google Calendar conectado correctamente!");
-    } catch (err) {
-      next(err);
-    }
+router.get("/google/callback", async (req, res, next) => {
+  try {
+    const { code } = req.query;
+    const { tokens } = await oauth2Client.getToken(code);
+    console.log(tokens);
+    console.log(req.user.name);
+    await saveGoogleTokens(req.user._id, tokens);
+    res.send("Google Calendar conectado correctamente!");
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 router.get(
   "/google/events",
