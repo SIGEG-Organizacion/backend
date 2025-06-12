@@ -30,7 +30,7 @@ router.post(
 router.put(
   "/update/:uuid",
   protect,
-  authorizeRoles("company"),
+  authorizeRoles("company", "adminLink"),
   validateRequest(updateOpportunityValidation),
   updateOpportunity
 );
