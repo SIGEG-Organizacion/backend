@@ -35,3 +35,29 @@ export const deleteStudent = async (req, res, next) => {
     next(err);
   }
 };
+
+export const markStudentAsGraduated = async (req, res, next) => {
+  const { id } = req.params;
+
+  try {
+    const student = await Student.findById(id);
+    
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    student.graduated = true;
+    
+    await Interest.deleteMany({ userId: student.userId });
+
+    await student.remove(); 
+
+    // Enviar respuesta
+    res.status(200).json({
+      message: "Student marked as graduated and removed successfully",
+      student,
+    });
+  } catch (err) {
+    next(err);
+  }
+};

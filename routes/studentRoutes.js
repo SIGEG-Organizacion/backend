@@ -1,6 +1,6 @@
 
 import express from "express";
-import { getStudentApplications, deleteStudent } from "../controllers/studentController.js";
+import { getStudentApplications, deleteStudent, markStudentAsGraduated } from "../controllers/studentController.js";
 import { protect, authorizeRoles } from "../middlewares/authMiddleware.js";
 import { validateRequest } from "../middlewares/validatorMiddleware.js";
 import { param } from "express-validator";
@@ -26,6 +26,13 @@ router.delete(
   protect,
   authorizeRoles("admin"),
   deleteStudent 
+);
+
+router.put(
+  "/graduate/:id", 
+  protect,
+  authorizeRoles("admin"), 
+  markStudentAsGraduated 
 );
 
 export default router;
