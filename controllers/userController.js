@@ -8,6 +8,8 @@ import {
   updateProfile,
   resetPasswordWithToken,
 } from "../services/userService.js";
+import { upload } from "../middlewares/fileUpload.js"; 
+import { uploadLogoToB2 } from "../utils/b2Uploader.js"; 
 
 // Register a new user
 export const registerUser = async (req, res, next) => {
@@ -37,11 +39,13 @@ export const registerUser = async (req, res, next) => {
 };
 
 export const createCompanyUser = async (req, res, next) => {
+  const { email, sector, address } = req.body;
+
   try {
-    const { email, sector, address, logo } = req.body;
-    await createCompany(email, sector, address, logo);
+    await createCompany(email, sector, address);
+
     res.status(201).json({
-      message: "User rol asignment successfully",
+      message: "Company created successfully",
     });
   } catch (err) {
     next(err);

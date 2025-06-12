@@ -1,28 +1,27 @@
+//controllers/opportunityController.js
 import Opportunity from "../models/opportunityModel.js";
 import {
   createOpportunity,
   listOpportunitiesWithName,
   updateOpportunityFields,
+  deleteOpportunity as deleteOpportunityService,
   getOpportunityService,
-  createFlyer,
   getOpportunitiesFiltered,
   deleteOpportunityEntry,
 } from "../services/opportunityService.js";
+import { uploadLogoToB2 } from "../utils/b2Uploader.js";
+import { createFlyer } from "../services/flyerService.js";
+import fs from 'fs';  
 
 export const createPublication = async (req, res, next) => {
-  const {
-    description,
-    requirements,
-    benefits,
-    mode,
-    deadline,
-    email,
-    format,
-    forStudents,
-  } = req.body;
+  const { description, requirements, benefits, mode, deadline, email, format, forStudents } = req.body;
+
+  // Log para verificar el valor de forStudents
+  console.log("Received forStudents:", forStudents);
   const userId = req.user._id;
-  let createdOpportunityId = null;
+  
   try {
+    // Crear la oportunidad
     const opportunity = await createOpportunity(
       userId,
       description,
@@ -31,22 +30,35 @@ export const createPublication = async (req, res, next) => {
       mode,
       deadline,
       email,
-      forStudents
+      forStudents 
     );
+    
+    // Lógica para procesar el logo si se ha adjuntado
+    let logoUrl = null;
+    if (req.file) {
+      const logoFile = req.file;
+      logoUrl = await uploadLogoToB2(logoFile.path, `logos/${logoFile.filename}`);
 
-    createdOpportunityId = opportunity._id;
-    // Crear flyer, subir a Backblaze B2 y obtener URL
-    const flyer = await createFlyer(opportunity._id, format);
-    // Guardar la URL del flyer en el documento mongoose
-    opportunity.flyerUrl = "https://www.google.com";
+      // Eliminar archivo temporal después de subirlo
+      fs.unlinkSync(logoFile.path); // Elimina el archivo temporal local
+
+      // Guardar la URL del logo en la oportunidad
+      opportunity.logoUrl = logoUrl;
+      await opportunity.save();
+    }
+
+    const flyer = await createFlyer(opportunity._id, format, logoUrl);
+
+    // Guardar la URL del flyer en la oportunidad
+    opportunity.flyerUrl = flyer.url;
     await opportunity.save();
+
     res.status(201).json({
       message: "Opportunity created successfully",
       opportunity,
       flyer,
     });
   } catch (err) {
-    await Opportunity.findByIdAndDelete(createdOpportunityId);
     next(err);
   }
 };
@@ -87,8 +99,8 @@ export const updateOpportunity = async (req, res, next) => {
 export const deleteOpportunity = async (req, res, next) => {
   const { uuid } = req.params;
   try {
-    await deleteOpportunityEntry(uuid);
-    res.status(200).json({ message: "Opportunity deleted successfully" });
+    const result = await deleteOpportunityService(uuid);
+    res.status(200).json(result);
   } catch (err) {
     next(err);
   }

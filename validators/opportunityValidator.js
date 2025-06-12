@@ -1,3 +1,4 @@
+//validators/opportunityValidator.js
 import { body, param, query } from "express-validator";
 import { emailValidator } from "./usersValidator.js";
 import { formatValidator } from "./flyerValidator.js";
@@ -36,22 +37,18 @@ const endRangeValidator = body("to")
   .withMessage("Deadline must be a valid date");
 
 const requirementsValidator = body("requirements")
-  .isArray({ min: 1 })
-  .withMessage("Requirements must be a non-empty array")
+  .isArray()
+  .withMessage("Requirements must be an array")
   .custom((requirements) => {
-    return requirements.every(
-      (item) => typeof item === "string" && item.trim().length >= 1
-    );
+    return requirements.every((item) => typeof item === "string" && item.trim().length > 0);
   })
   .withMessage("Each requirement must be a non-empty string");
 
 const benefitsValidator = body("benefits")
-  .isArray({ min: 1 })
-  .withMessage("Benefits must be a non-empty array")
+  .isArray()
+  .withMessage("Benefits must be an array")
   .custom((benefits) => {
-    return benefits.every(
-      (item) => typeof item === "string" && item.trim().length >= 1
-    );
+    return benefits.every((item) => typeof item === "string" && item.trim().length > 0);
   })
   .withMessage("Each benefit must be a non-empty string");
 
@@ -77,7 +74,8 @@ export const uuidValidatorQuery = query("uuid")
 
 export const forStudentsValidator = body("forStudents")
   .isBoolean()
-  .withMessage("Invalid boolean value");
+  .withMessage("Invalid boolean value")
+  .toBoolean();  
 
 // Combined validators for different routes
 export const createOpportunityValidation = [
