@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const flyerSchema = new mongoose.Schema({
   opportunityId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Oportunity",
+    ref: "Opportunity",
     required: true,
   }, // Reference to 'companies'
   content: { type: String },

@@ -5,6 +5,7 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import { connectDB } from "./config/db.js";
 import userRoutes from "./routes/userRoutes.js";
+import calendarRoutes from "./routes/calendarRoutes.js";
 import opportunityRoutes from "./routes/opportunityRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import interestRoutes from "./routes/interestRoutes.js";
@@ -15,7 +16,11 @@ import rateLimit from "express-rate-limit";
 // Load env variables
 dotenv.config();
 
-const app = express();
+const app = express([
+  "https://backend-5e8v.onrender.com/",
+  "https://localhost:5000",
+  "https://localhost:5173",
+]);
 
 //limit request
 const apiLimiter = rateLimit({
@@ -27,7 +32,7 @@ const apiLimiter = rateLimit({
 // Middlewares
 app.use(helmet());
 app.use(cors({ origin: process.env.CLIENT_URL }));
-app.use(express.json({ limit: "10kb" }));
+app.use(express.json({ limit: "30kb" }));
 app.use(morgan("dev"));
 app.use("/", apiLimiter);
 
@@ -37,7 +42,10 @@ connectDB();
 startOpportunityCleanupJob();
 
 // Routes
+
+app.get("/health", (req, res) => res.sendStatus(200)); //prevent spindowns
 app.use("/api/users", userRoutes);
+app.use("/api/calendar", calendarRoutes);
 app.use("/api/opportunities", opportunityRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/interests", interestRoutes);

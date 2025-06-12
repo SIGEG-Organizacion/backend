@@ -1,11 +1,3 @@
-// To-Do List for /controllers/studentController.js
-// [ ] 5. Test the controller functions to ensure:
-//       - Applying for an opportunity correctly adds the student to the opportunity
-//       - Retrieving applications returns the correct list of opportunities
-// [ ] 6. Optionally, add methods for:
-//       - Updating student profile
-//       - Viewing student profile
-
 import User from "../models/userModel.js";
 import Interest from "../models/interestModel.js";
 

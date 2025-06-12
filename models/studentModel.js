@@ -43,6 +43,18 @@ studentSchema.methods.updateMajor = async function (newMajor) {
   return this;
 };
 
+studentSchema.pre('remove', async function (next) {
+  try {
+    // Eliminar todos los intereses relacionados con este estudiante
+    await Interest.deleteMany({ userId: this.userId });
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+
 const Student = mongoose.model("Student", studentSchema);
 
 export default Student;

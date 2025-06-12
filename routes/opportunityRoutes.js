@@ -1,4 +1,4 @@
-
+//routes/opportunityRoutes.js
 import express from "express";
 import {
   createPublication,
@@ -18,15 +18,19 @@ import {
 } from "../validators/opportunityValidator.js";
 import { protect, authorizeRoles } from "../middlewares/authMiddleware.js";
 import { query } from "express-validator";
+import { upload } from '../middlewares/fileUpload.js';
+
 const router = express.Router();
 
 router.post(
   "/create",
-  protect,
-  authorizeRoles("company"),
-  validateRequest(createOpportunityValidation),
+  upload.single("logo"), 
+  protect,  
+  authorizeRoles("company"),  
+  validateRequest(createOpportunityValidation),  
   createPublication
 );
+
 router.put(
   "/update/:uuid",
   protect,
