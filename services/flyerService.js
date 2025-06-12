@@ -22,9 +22,11 @@ export const createFlyer = async (opportunityId, format, logoUrl) => {
     fs.mkdirSync(path.resolve("./temp"));
     console.log("Temporary folder created: ./temp"); // Log para verificar la creación
   }
+  console.log("T10");
 
   // Generar el PDF
   await generateFlyerPDF(opportunity, logoUrl, outputPath);
+  console.log("T11");
 
   const fileName = `flyers/flyer_${opportunity.uuid}.${format}`;
   const signedUrl = await uploadFileToB2(outputPath, fileName);

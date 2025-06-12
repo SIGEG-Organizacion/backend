@@ -18,16 +18,19 @@ import {
 } from "../validators/opportunityValidator.js";
 import { protect, authorizeRoles } from "../middlewares/authMiddleware.js";
 import { query } from "express-validator";
-import { upload } from '../middlewares/fileUpload.js';
+import { upload } from "../middlewares/fileUpload.js";
 
 const router = express.Router();
 
 router.post(
   "/create",
-  upload.single("logo"), 
-  protect,  
-  authorizeRoles("company"),  
-  validateRequest(createOpportunityValidation),  
+  upload.fields([
+    { name: "logo", maxCount: 1 },
+    { name: "document", maxCount: 1 },
+  ]),
+  protect,
+  authorizeRoles("company"),
+  validateRequest(createOpportunityValidation),
   createPublication
 );
 

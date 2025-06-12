@@ -8,9 +8,10 @@ import {
   getOpportunityService,
   getOpportunitiesFiltered,
 } from "../services/opportunityService.js";
-import { uploadLogoToB2 } from "../utils/b2Uploader.js";
+import { uploadLogoToB2, uploadDocumentToB2 } from "../utils/b2Uploader.js";
 import { createFlyer } from "../services/flyerService.js";
 import fs from "fs";
+import path from "path";
 
 export const createPublication = async (req, res, next) => {
   const {
@@ -23,13 +24,9 @@ export const createPublication = async (req, res, next) => {
     format,
     forStudents,
   } = req.body;
-
-  // Log para verificar el valor de forStudents
-  console.log("Received forStudents:", forStudents);
   const userId = req.user._id;
 
   try {
-    // Crear la oportunidad
     const opportunity = await createOpportunity(
       userId,
       description,
@@ -41,29 +38,33 @@ export const createPublication = async (req, res, next) => {
       forStudents
     );
 
-    // Lógica para procesar el logo si se ha adjuntado
-    let logoUrl = null;
-    if (req.file) {
-      const logoFile = req.file;
-      logoUrl = await uploadLogoToB2(
-        logoFile.path,
-        `logos/${logoFile.filename}`
-      );
-
-      // Eliminar archivo temporal después de subirlo
-      fs.unlinkSync(logoFile.path); // Elimina el archivo temporal local
-
-      // Guardar la URL del logo en la oportunidad
+    let logoPath = null;
+    if (req.files?.logo?.[0]) {
+      const logoFile = req.files.logo[0];
+      const logoKey = `logos/logo_${
+        opportunity.uuid
+      }_${Date.now()}${path.extname(logoFile.originalname)}`;
+      const logoUrl = await uploadLogoToB2(logoFile.path, logoKey);
+      logoPath = logoFile.path;
       opportunity.logoUrl = logoUrl;
       await opportunity.save();
     }
-
-    const flyer = await createFlyer(opportunity._id, format, logoUrl);
-
-    // Guardar la URL del flyer en la oportunidad
-    opportunity.flyerUrl = flyer.url;
-    await opportunity.save();
-
+    let flyer;
+    if (req.files?.document?.[0]) {
+      const docFile = req.files.document[0];
+      const signedUrl = await uploadDocumentToB2(docFile, opportunity.uuid);
+      opportunity.flyerUrl = signedUrl;
+      await opportunity.save();
+      flyer = { url: signedUrl };
+    } else {
+      console.log(logoPath);
+      flyer = await createFlyer(opportunity._id, format, logoPath || null);
+      opportunity.flyerUrl = flyer.url;
+      await opportunity.save();
+    }
+    if (logoPath !== null) {
+      fs.unlinkSync(logoPath);
+    }
     res.status(201).json({
       message: "Opportunity created successfully",
       opportunity,

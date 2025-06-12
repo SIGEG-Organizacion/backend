@@ -1,33 +1,36 @@
 import multer from "multer";
 import path from "path";
+import fs from "fs";
 
-// Configurar Multer para almacenar el archivo en un directorio temporal
+// Carpeta de uploads temporales
+const uploadPath = "./uploads";
+if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath);
+
+// Storage único para logo y document
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadPath = './uploads'; // Carpeta donde se guardarán los archivos
-    // Verificar si el directorio existe, si no, crearlo
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath);
-    }
+  destination(_req, _file, cb) {
     cb(null, uploadPath);
   },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1E9);
-    cb(null, "logo-" + uniqueSuffix + path.extname(file.originalname));
+  filename(req, file, cb) {
+    // Ej: logo-1623456789012-123.png  ó  flyer-1623456789012-123.pdf
+    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname).toLowerCase();
+    const prefix = file.fieldname === "logo" ? "logo" : "flyer";
+    cb(null, `${prefix}-${unique}${ext}`);
   },
 });
 
-// Configuración de Multer para aceptar sólo imágenes
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = ["image/png", "image/jpeg", "image/jpg"];
-  if (!allowedTypes.includes(file.mimetype)) {
-    return cb(new Error("Only .png, .jpg and .jpeg files are allowed!"), false);
+// Ahora permitimos png/jpg/jpeg **y** pdf
+const fileFilter = (_req, file, cb) => {
+  const allowed = ["image/png", "image/jpeg", "image/jpg", "application/pdf"];
+  if (!allowed.includes(file.mimetype)) {
+    return cb(new Error("Sólo se permiten .png, .jpg, .jpeg y .pdf"), false);
   }
   cb(null, true);
 };
 
 export const upload = multer({
-  storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // Limitar el tamaño del archivo a 10MB (ajustable)
-  fileFilter: fileFilter,
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // hasta 10 MB
+  fileFilter,
 });

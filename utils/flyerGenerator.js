@@ -4,69 +4,89 @@ import path from "path";
 
 export const generateFlyerPDF = (opportunity, companyLogoUrl, outputPath) => {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument();
+    // Crear documento A4 con márgenes
+    const doc = new PDFDocument({
+      size: "A4",
+      margins: { top: 60, bottom: 60, left: 50, right: 50 },
+    });
     const writeStream = fs.createWriteStream(outputPath);
-
-    console.log("Generating flyer at path:", outputPath); // Verifica si la ruta es correcta
-
     doc.pipe(writeStream);
 
-    doc.fontSize(20).text("¡Nueva Oportunidad!", { align: "center" });
-    doc.moveDown();
-
+    // 1) Fecha de creación arriba a la derecha
+    const createdAt = new Date().toLocaleDateString();
     doc
-      .fontSize(16)
-      .font("Helvetica-Bold")
-      .text("Descripción:", { align: "center" });
-    doc
-      .fontSize(14)
-      .font("Helvetica")
-      .text(opportunity.description, { align: "center" });
-    doc.moveDown();
+      .font("Courier")
+      .fontSize(9)
+      .fillColor("#666")
+      .text(`Fecha de creación: ${createdAt}`, { align: "right" });
+    doc.moveDown(1);
 
-    doc
-      .fontSize(16)
-      .font("Helvetica-Bold")
-      .text("Requisitos:", { align: "center" });
-    opportunity.requirements.forEach((req) => {
-      doc.fontSize(14).font("Helvetica").text(`- ${req}`, { align: "center" });
-    });
-    doc.moveDown();
-
-    doc
-      .fontSize(16)
-      .font("Helvetica-Bold")
-      .text("Beneficios:", { align: "center" });
-    opportunity.benefits.forEach((benefit) => {
-      doc
-        .fontSize(14)
-        .font("Helvetica")
-        .text(`- ${benefit}`, { align: "center" });
-    });
-    doc.moveDown();
-
-    doc
-      .fontSize(14)
-      .font("Helvetica")
-      .text(`Modalidad: ${opportunity.mode}`, { align: "center" });
-    doc.text(`Fecha límite: ${new Date(opportunity.deadline).toDateString()}`, {
-      align: "center",
-    });
-    doc.text(`Contacto: ${opportunity.email}`, { align: "center" });
-    doc.moveDown();
-
+    // 2) Logo centrado en la parte superior en sección dedicada
+    const logoSectionY = doc.y;
     if (companyLogoUrl) {
-      doc.image(companyLogoUrl, 50, 50, { width: 100, height: 100 }); // Ajusta la posición y tamaño
+      const logoSize = 80;
+      const x = (doc.page.width - logoSize) / 2;
+      // Dibujar logo en posición fija
+      doc.image(companyLogoUrl, x, logoSectionY, {
+        width: logoSize,
+        height: logoSize,
+      });
+      // Mover cursor justo debajo del logo
+      doc.y = logoSectionY + logoSize + 20;
+    } else {
+      // Si no hay logo, dejar espacio equivalente
+      doc.y += 100;
     }
 
+    // 3) Título principal
+    doc
+      .font("Courier-Bold")
+      .fontSize(24)
+      .fillColor("#000")
+      .text("¡Nueva Oportunidad!", { align: "center" });
+    doc.moveDown(2);
+
+    // 4) Secciones simples: título + texto
+    const section = (title, contentFn) => {
+      doc.font("Courier-Bold").fontSize(16).fillColor("#333").text(title);
+      doc.moveDown(0.5);
+      doc.font("Courier").fontSize(11).fillColor("#000");
+      contentFn();
+      doc.moveDown(1.5);
+    };
+
+    // Descripción
+    section("Descripción:", () => {
+      doc.text(opportunity.description, { align: "left" });
+    });
+
+    // Requisitos
+    section("Requisitos:", () => {
+      opportunity.requirements.forEach((req) => {
+        doc.text(`• ${req}`);
+      });
+    });
+
+    // Beneficios
+    section("Beneficios:", () => {
+      opportunity.benefits.forEach((benefit) => {
+        doc.text(`• ${benefit}`);
+      });
+    });
+
+    // Detalles
+    section("Detalles:", () => {
+      doc.text(`Modalidad: ${opportunity.mode}`);
+      doc.text(
+        `Fecha límite: ${new Date(opportunity.deadline).toLocaleDateString()}`
+      );
+      doc.text(`Contacto: ${opportunity.email}`);
+      doc.text(`Para estudiantes: ${opportunity.forStudents ? "Sí" : "No"}`);
+    });
+
+    // Finalizar
     doc.end();
-
-    writeStream.on("finish", () => {
-      resolve(outputPath);
-    });
-
-    writeStream.on("error", (err) => {
-      reject(err);
-    });
+    writeStream.on("finish", () => resolve(outputPath));
+    writeStream.on("error", (err) => reject(err));
   });
 };
