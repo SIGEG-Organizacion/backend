@@ -1,3 +1,4 @@
+//controllers/studentController.js
 import User from "../models/userModel.js";
 import Interest from "../models/interestModel.js";
 
@@ -10,6 +11,26 @@ export const getStudentApplications = async (req, res, next) => {
       .populate("opportunityId")
       .select("-_id -_companyId");
     res.status(200).json({ applications: interests });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteStudent = async (req, res, next) => {
+  const { email } = req.params;
+
+  try {
+    const student = await Student.findOne({ "userId.email": email });
+
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    await Interest.deleteMany({ userId: student.userId });
+
+    await student.remove();
+
+    res.status(200).json({ message: "Student and related interests deleted successfully" });
   } catch (err) {
     next(err);
   }
