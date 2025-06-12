@@ -12,7 +12,6 @@ import path from "path";
 import fs from "fs";
 import Interest from "../models/interestModel.js";
 
-
 export const createOpportunity = async (
   userId,
   description,
@@ -21,7 +20,7 @@ export const createOpportunity = async (
   mode,
   deadline,
   email,
-  forStudents 
+  forStudents
 ) => {
   const opportunityExists = await Opportunity.findOne({
     description: description,
@@ -42,15 +41,14 @@ export const createOpportunity = async (
     mode,
     deadline: new Date(deadline),
     email,
-    status: "pending-approval",  
+    status: "pending-approval",
     uuid: uuidv4(),
-    forStudents, 
+    forStudents,
   });
 
   await opportunity.save();
   return opportunity;
 };
-
 
 export const updateOpportunityFields = async (
   uuid,
@@ -96,10 +94,14 @@ export const deleteOpportunity = async (uuid) => {
     }
 
     // Eliminar todos los intereses relacionados
-    await Interest.deleteMany({ opportunityId: opportunity._id }).session(session);
+    await Interest.deleteMany({ opportunityId: opportunity._id }).session(
+      session
+    );
 
     // Eliminar el flyer relacionado, si existe
-    const flyer = await Flyer.findOne({ opportunityId: opportunity._id }).session(session);
+    const flyer = await Flyer.findOne({
+      opportunityId: opportunity._id,
+    }).session(session);
     if (flyer) {
       await flyer.deleteOne().session(session);
     }
@@ -111,14 +113,16 @@ export const deleteOpportunity = async (uuid) => {
     await session.commitTransaction();
     session.endSession();
 
-    return { message: "Opportunity and related interests and flyer deleted successfully" };
+    return {
+      message:
+        "Opportunity and related interests and flyer deleted successfully",
+    };
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
     throw new Error("Error during opportunity deletion: " + error.message);
   }
 };
-
 
 export const listOpportunitiesWithName = async (company_name) => {
   const user = await User.findOne({ name: company_name }, { _id: 1 });

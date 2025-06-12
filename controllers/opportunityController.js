@@ -7,19 +7,27 @@ import {
   deleteOpportunity as deleteOpportunityService,
   getOpportunityService,
   getOpportunitiesFiltered,
-  deleteOpportunityEntry,
 } from "../services/opportunityService.js";
 import { uploadLogoToB2 } from "../utils/b2Uploader.js";
 import { createFlyer } from "../services/flyerService.js";
-import fs from 'fs';  
+import fs from "fs";
 
 export const createPublication = async (req, res, next) => {
-  const { description, requirements, benefits, mode, deadline, email, format, forStudents } = req.body;
+  const {
+    description,
+    requirements,
+    benefits,
+    mode,
+    deadline,
+    email,
+    format,
+    forStudents,
+  } = req.body;
 
   // Log para verificar el valor de forStudents
   console.log("Received forStudents:", forStudents);
   const userId = req.user._id;
-  
+
   try {
     // Crear la oportunidad
     const opportunity = await createOpportunity(
@@ -30,14 +38,17 @@ export const createPublication = async (req, res, next) => {
       mode,
       deadline,
       email,
-      forStudents 
+      forStudents
     );
-    
+
     // Lógica para procesar el logo si se ha adjuntado
     let logoUrl = null;
     if (req.file) {
       const logoFile = req.file;
-      logoUrl = await uploadLogoToB2(logoFile.path, `logos/${logoFile.filename}`);
+      logoUrl = await uploadLogoToB2(
+        logoFile.path,
+        `logos/${logoFile.filename}`
+      );
 
       // Eliminar archivo temporal después de subirlo
       fs.unlinkSync(logoFile.path); // Elimina el archivo temporal local
