@@ -68,10 +68,16 @@ export const updateOpportunityFields = async (
 
   // update only the provided fields
   if (description) opportunity.description = description;
-  if (requirements) opportunity.requirements = requirements;
-  if (benefits) opportunity.benefits = benefits;
+  if (requirements) {
+    opportunity.requirements = requirements;
+    opportunity.markModified("requirements");
+  }
+  if (benefits) {
+    opportunity.benefits = benefits;
+    opportunity.markModified("benefits");
+  }
   if (mode) opportunity.mode = mode;
-  if (deadline) opportunity.deadline = new Date(deadline);
+  if (deadline) opportunity.deadline = deadline;
   if (email) opportunity.email = email;
   if (status) {
     opportunity.status = status;
@@ -95,7 +101,8 @@ export const updateOpportunityFields = async (
     forStudents,
     opportunity.logoUrl,
   ].some((x) => x !== undefined);
-
+  console.log("Modified paths:", opportunity.modifiedPaths());
+  const updated = await opportunity.save();
   if (contentChanged) {
     const oldFlyer = await Flyer.findOne({ opportunityId: opportunity._id });
     if (!oldFlyer) throw AppError.notFound("Flyer no encontrado");
@@ -106,7 +113,7 @@ export const updateOpportunityFields = async (
     );
     opportunity.flyerUrl = newFlyer.url;
   }
-  const updated = await opportunity.save();
+
   return updated;
 };
 
@@ -226,7 +233,10 @@ export const createFlyer = async (opportunityId, format) => {
   }
 
   // Generar el PDF para el flyer
-  const outputPath = path.resolve(`./temp/flyer_${opportunity.uuid}.pdf`);
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const outputPath = path.resolve(
+    `./temp/flyer_${opportunity.uuid}_${timestamp}.pdf`
+  );
 
   // Verificar que la carpeta temporal exista, si no, crearla
   if (!fs.existsSync(path.resolve("./temp"))) {
@@ -241,7 +251,7 @@ export const createFlyer = async (opportunityId, format) => {
   );
 
   // Subir el archivo a Backblaze B2 y obtener la URL firmada
-  const fileName = `flyers/flyer_${opportunity.uuid}.pdf`;
+  const fileName = `flyers/flyer_${opportunity.uuid}_${timestamp}.pdf`;
   const signedUrl = await uploadFileToB2(outputPath, fileName);
 
   // Crear o actualizar el documento de flyer en MongoDB
