@@ -1,239 +1,199 @@
-// utils/reportExportClient.js
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
+// reportExporter.js
+
 import { saveAs } from "file-saver";
+import blobStream from "blob-stream";
+import PDFDocument from "pdfkit/js/pdfkit.standalone.js";
+import ExcelJS from "exceljs/dist/exceljs.min.js";
 
-/**
- * Exporta Reporte de Intereses a PDF en el cliente
- * @param {Object} report - Objeto report con type, data y generationDate
- * @param {string} logoUrl - URL pública del logo (LogoTEC.png)
- */
-export async function exportInterestReportPDF(report, logoUrl) {
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
-  const img = new Image();
-  img.src = logoUrl;
-  await new Promise((resolve) => {
-    img.onload = resolve;
-  });
-  doc.addImage(img, "PNG", 40, 30, 100, 30);
-  doc.setFontSize(18).text("Reporte de Intereses", 160, 50);
-  doc
-    .setFontSize(10)
-    .text(
-      `Generado: ${new Date(report.generationDate).toLocaleString()}`,
-      40,
-      80
-    );
+// Traducciones
+const etiquetaCampo = {
+  date: "Fecha",
+  period: "Periodo",
+  count: "Cantidad",
+  status: "Estado",
+  totalUsers: "Total Usuarios",
+  opportunity: "Oportunidad",
+};
+const etiquetaFiltro = {
+  companyName: "Empresa",
+  startDate: "Fecha inicio",
+  endDate: "Fecha fin",
+  forStudents: "Para estudiantes",
+  opportunityUuid: "UUID Oportunidad",
+  status: "Estado",
+  groupBy: "Granularidad",
+};
+const traduccionGroupBy = { day: "Diario", month: "Mensual" };
+
+function formatearValor(val) {
+  if (typeof val === "boolean") return val ? "Sí" : "No";
+  if (typeof val === "string" && traduccionGroupBy[val])
+    return traduccionGroupBy[val];
+  return val != null ? String(val) : "";
+}
+function obtenerCabecera(titulo) {
+  return { titulo, fecha: new Date().toLocaleDateString("es-CR") };
+}
+
+// Genera y descarga PDF en browser
+export function exportReportPDFBrowser(reportData, filename = "reporte.pdf") {
+  const doc = new PDFDocument({ margin: 40 });
+  const stream = doc.pipe(blobStream());
+
+  const cab = obtenerCabecera(reportData.type);
+  doc.fontSize(18).text(cab.titulo.toUpperCase(), { align: "center" });
+  doc.moveDown();
+  doc.fontSize(10).text(`Fecha de generación: ${reportData.generationDate}`);
+  doc.moveDown();
+
   // Filtros
-  doc.setFontSize(12).text("Filtros aplicados:", 40, 110);
-  const filters = Object.entries(report.data.filters).map(
-    ([k, v]) => `${k}: ${v ?? "—"}`
-  );
-  filters.forEach((line, i) => doc.text(line, 60, 130 + i * 14));
-  // Estadísticas
-  const startY = 130 + filters.length * 14 + 20;
-  doc.setFontSize(12).text("Estadísticas:", 40, startY);
-  const stats = [
-    `Total oportunidades: ${report.data.totalOpportunities}`,
-    `Total intereses: ${report.data.totalInterests}`,
-    `Promedio por oportunidad: ${report.data.avgInterestsPerOpportunity.toFixed(
-      2
-    )}`,
-  ];
-  stats.forEach((line, i) => doc.text(line, 60, startY + 20 + i * 14));
-  if (report.data.description) {
-    doc.text(`Descripción: ${report.data.description}`, 40, startY + 80);
+  doc
+    .fontSize(12)
+    .fillColor("#444")
+    .text("Filtros aplicados", { underline: true });
+  Object.entries(reportData.filters || {}).forEach(([k, v]) => {
+    doc.text(`${etiquetaFiltro[k] || k}: ${formatearValor(v)}`);
+  });
+  doc.moveDown();
+
+  // Datos
+  doc
+    .fontSize(12)
+    .fillColor("#000")
+    .text("Datos del informe", { underline: true });
+  const rows = Array.isArray(reportData.data)
+    ? reportData.data
+    : [reportData.data];
+  if (rows.length) {
+    const cols = Object.keys(rows[0]);
+    const startY = doc.y + 10;
+    const colWidth = (doc.page.width - 80) / cols.length;
+    // Header
+    cols.forEach((c, i) =>
+      doc.text(etiquetaCampo[c] || c, 40 + i * colWidth, startY)
+    );
+    // Values
+    rows.forEach((r, ri) => {
+      cols.forEach((c, ci) => {
+        doc.text(
+          formatearValor(r[c]),
+          40 + ci * colWidth,
+          startY + 20 * (ri + 1)
+        );
+      });
+    });
   }
-  const pdfBlob = doc.output("blob");
-  saveAs(pdfBlob, `interest_report_${Date.now()}.pdf`);
-}
 
-/**
- * Exporta Reporte de Intereses a Excel en el cliente
- * @param {Object} report
- */
-export function exportInterestReportExcel(report) {
-  const header = ["Oportunidad UUID"];
-  const rows = report.data.opportunityUuids.map((uuid) => [uuid]);
-  const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Intereses");
-  const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  saveAs(
-    new Blob([wbout], { type: "application/octet-stream" }),
-    `interest_${Date.now()}.xlsx`
-  );
-}
-
-/**
- * Exporta Recuento de Oportunidades a PDF en el cliente
- * @param {Object} report
- * @param {string} logoUrl
- */
-export async function exportOpportunityNumbersPDF(report, logoUrl) {
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
-  const img = new Image();
-  img.src = logoUrl;
-  await new Promise((resolve) => {
-    img.onload = resolve;
+  doc.end();
+  stream.on("finish", () => {
+    const blob = stream.toBlob("application/pdf");
+    saveAs(blob, filename);
   });
-  doc.addImage(img, "PNG", 40, 30, 100, 30);
-  doc.setFontSize(18).text("Reporte de Oportunidades", 160, 50);
-  doc
-    .setFontSize(10)
-    .text(
-      `Generado: ${new Date(report.generationDate).toLocaleString()}`,
-      40,
-      80
-    );
-  // Tabla
-  const head = [["Fecha", "Cantidad"]];
-  const body = report.data.dataPoints
-    ? report.data.dataPoints.map((pt) => [pt.date, pt.count])
-    : [["Total", report.data.total]];
-  autoTable(doc, { startY: 110, head, body, styles: { fontSize: 10 } });
-  const pdfBlob = doc.output("blob");
-  saveAs(pdfBlob, `opportunities_numbers_${Date.now()}.pdf`);
 }
 
-/**
- * Exporta Recuento de Oportunidades a Excel en el cliente
- * @param {Object} report
- */
-export function exportOpportunityNumbersExcel(report) {
-  const data = report.data.dataPoints
-    ? report.data.dataPoints.map((pt) => ({
-        Fecha: pt.date,
-        Cantidad: pt.count,
-      }))
-    : [{ Fecha: "Total", Cantidad: report.data.total }];
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Oportunidades");
-  const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  saveAs(
-    new Blob([wbout], { type: "application/octet-stream" }),
-    `opportunities_numbers_${Date.now()}.xlsx`
-  );
-}
+// Genera y descarga Excel en browser
+export async function exportReportExcelBrowser(
+  reportData,
+  filename = "reporte.xlsx"
+) {
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Reporte");
 
-/**
- * Exporta Estadísticas de Oportunidades a PDF en el cliente
- * @param {Object} report
- * @param {string} logoUrl
- */
-export async function exportOpportunityStatsPDF(report, logoUrl) {
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
-  const img = new Image();
-  img.src = logoUrl;
-  await new Promise((resolve) => {
-    img.onload = resolve;
-  });
-  doc.addImage(img, "PNG", 40, 30, 100, 30);
-  doc.setFontSize(18).text("Reporte de Estados de Oportunidades", 120, 50);
-  doc
-    .setFontSize(10)
-    .text(
-      `Generado: ${new Date(report.generationDate).toLocaleString()}`,
-      40,
-      80
-    );
-  const head = [["Estado", "Cantidad"]];
-  const body = report.data.statusDistribution.map((row) => [
-    row.status,
-    row.count,
+  // Cabecera
+  sheet.mergeCells("A1", "D1");
+  sheet.getCell("A1").value = reportData.type.toUpperCase();
+  sheet.getCell(
+    "A2"
+  ).value = `Fecha de generación: ${reportData.generationDate}`;
+
+  // Tabla filtros
+  const filtRows = Object.entries(reportData.filters || {}).map(([k, v]) => [
+    etiquetaFiltro[k] || k,
+    formatearValor(v),
   ]);
-  autoTable(doc, { startY: 110, head, body, styles: { fontSize: 10 } });
-  doc.text(`Total: ${report.data.total}`, 40, doc.lastAutoTable.finalY + 20);
-  if (report.data.average) {
-    doc.text(
-      `Promedio${
-        report.data.groupBy ? " por periodo" : ""
-      }: ${report.data.average.toFixed(2)}`,
-      150,
-      doc.lastAutoTable.finalY + 20
+  sheet.addTable({
+    name: "Filtros",
+    ref: "A4",
+    headerRow: true,
+    columns: [{ name: "Filtro" }, { name: "Valor" }],
+    rows: filtRows.length ? filtRows : [["—", ""]],
+  });
+
+  // Tabla datos
+  const rows = Array.isArray(reportData.data)
+    ? reportData.data
+    : [reportData.data];
+  if (rows.length) {
+    const cols = Object.keys(rows[0]).map((c) => ({
+      name: etiquetaCampo[c] || c,
+    }));
+    const dataRows = rows.map((r) =>
+      Object.values(r).map((v) => formatearValor(v))
     );
+    const startRow = 6 + filtRows.length;
+    sheet.addTable({
+      name: "Datos",
+      ref: `A${startRow}`,
+      headerRow: true,
+      columns: cols,
+      rows: dataRows,
+    });
   }
-  const pdfBlob = doc.output("blob");
-  saveAs(pdfBlob, `opportunity_stats_${Date.now()}.pdf`);
+
+  const buf = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buf], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  saveAs(blob, filename);
 }
 
-/**
- * Exporta Estadísticas de Oportunidades a Excel en el cliente
- * @param {Object} report
- */
-export function exportOpportunityStatsExcel(report) {
-  const data = report.data.statusDistribution.map((row) => ({
-    Estado: row.status,
-    Cantidad: row.count,
-  }));
-  data.push({ Estado: "Total", Cantidad: report.data.total });
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Estados");
-  const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  saveAs(
-    new Blob([wbout], { type: "application/octet-stream" }),
-    `opportunity_stats_${Date.now()}.xlsx`
+// Atajos export
+export function exportOpportunityNumbersPDFBrowser(data) {
+  return exportReportPDFBrowser(
+    Object.assign({ type: "NÚMEROS OPORTUNIDADES" }, data),
+    "numeros-oportunidades.pdf"
+  );
+}
+export function exportOpportunityStatsPDFBrowser(data) {
+  return exportReportPDFBrowser(
+    Object.assign({ type: "ESTADO OPORTUNIDADES" }, data),
+    "estado-oportunidades.pdf"
+  );
+}
+export function exportUserStatsPDFBrowser(data) {
+  return exportReportPDFBrowser(
+    Object.assign({ type: "ESTADÍSTICAS USUARIOS" }, data),
+    "usuarios.pdf"
+  );
+}
+export function exportInterestNumbersPDFBrowser(data) {
+  return exportReportPDFBrowser(
+    Object.assign({ type: "NÚMEROS DE INTERESES" }, data),
+    "intereses.pdf"
   );
 }
 
-/**
- * Exporta Estadísticas de Usuarios a PDF en el cliente
- * @param {Object} report
- * @param {string} logoUrl
- */
-export async function exportUserStatsPDF(report, logoUrl) {
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
-  const img = new Image();
-  img.src = logoUrl;
-  await new Promise((resolve) => {
-    img.onload = resolve;
-  });
-  doc.addImage(img, "PNG", 40, 30, 100, 30);
-  doc.setFontSize(18).text("Reporte de Usuarios", 160, 50);
-  doc
-    .setFontSize(10)
-    .text(
-      `Generado: ${new Date(report.generationDate).toLocaleString()}`,
-      40,
-      80
-    );
-  const head = [["Rol", "Validados", "Total"]];
-  const val =
-    report.data.filters.validated != null
-      ? report.data.filters.validated
-      : "Todos";
-  const body = [
-    [report.data.filters.role || "Todos", val, report.data.totalUsers],
-  ];
-  autoTable(doc, { startY: 110, head, body, styles: { fontSize: 10 } });
-  const pdfBlob = doc.output("blob");
-  saveAs(pdfBlob, `users_stats_${Date.now()}.pdf`);
+export function exportOpportunityNumbersExcelBrowser(data) {
+  return exportReportExcelBrowser(
+    Object.assign({ type: "NÚMEROS OPORTUNIDADES" }, data),
+    "numeros-oportunidades.xlsx"
+  );
 }
-
-/**
- * Exporta Estadísticas de Usuarios a Excel en el cliente
- * @param {Object} report
- */
-export function exportUserStatsExcel(report) {
-  const data = [
-    {
-      Rol: report.data.filters.role || "Todos",
-      Validados:
-        report.data.filters.validated != null
-          ? report.data.filters.validated
-          : "Todos",
-      Total: report.data.totalUsers,
-    },
-  ];
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Usuarios");
-  const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  saveAs(
-    new Blob([wbout], { type: "application/octet-stream" }),
-    `users_stats_${Date.now()}.xlsx`
+export function exportOpportunityStatsExcelBrowser(data) {
+  return exportReportExcelBrowser(
+    Object.assign({ type: "ESTADO OPORTUNIDADES" }, data),
+    "estado-oportunidades.xlsx"
+  );
+}
+export function exportUserStatsExcelBrowser(data) {
+  return exportReportExcelBrowser(
+    Object.assign({ type: "ESTADÍSTICAS USUARIOS" }, data),
+    "usuarios.xlsx"
+  );
+}
+export function exportInterestNumbersExcelBrowser(data) {
+  return exportReportExcelBrowser(
+    Object.assign({ type: "NÚMEROS DE INTERESES" }, data),
+    "intereses.xlsx"
   );
 }

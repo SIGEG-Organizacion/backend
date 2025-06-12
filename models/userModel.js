@@ -62,18 +62,18 @@ userSchema.pre("save", async function (next) {
   }
   next();
 });
-userSchema.pre('remove', async function (next) {
+userSchema.pre("remove", async function (next) {
   try {
     // Eliminar todos los intereses asociados al usuario
     await Interest.deleteMany({ userId: this._id });
 
     // Eliminar el estudiante si el usuario es un estudiante
-    if (this.role === 'student') {
+    if (this.role === "student") {
       await Student.deleteOne({ userId: this._id });
     }
 
     // Eliminar la empresa si el usuario es una empresa
-    if (this.role === 'company') {
+    if (this.role === "company") {
       await Company.deleteOne({ userId: this._id });
     }
 

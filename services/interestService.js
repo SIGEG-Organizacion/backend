@@ -46,7 +46,7 @@ export const listInterestByMail = async (studentMail) => {
   const interests = await Interest.find({ userId: studentExists._id })
     .populate({
       path: "opportunityId",
-      select: "companyId deadline description mode contact uuid",
+      select: "companyId deadline description mode email uuid",
       populate: [
         {
           path: "companyId",
@@ -60,7 +60,7 @@ export const listInterestByMail = async (studentMail) => {
     })
     .populate({
       path: "userId",
-      select: "name contactNumber email role",
+      select: "name phone_number email role",
     })
     .select("-__v -_id -createdAt");
 
@@ -70,9 +70,9 @@ export const listInterestByMail = async (studentMail) => {
     deadline: interest.opportunityId.deadline,
     description: interest.opportunityId.description,
     mode: interest.opportunityId.mode,
-    contact: interest.opportunityId.contact,
+    contact: interest.opportunityId.email,
     userName: interest.userId.name,
-    userContact: interest.userId.contactNumber,
+    userContact: interest.userId.phone_number,
     userEmail: interest.userId.email,
     userRole: interest.userId.role,
   }));
@@ -89,7 +89,7 @@ export const listInterestByOpportunity = async (uuid) => {
   })
     .populate({
       path: "opportunityId",
-      select: "companyId deadline description mode contact",
+      select: "companyId deadline description mode email",
       populate: [
         {
           path: "companyId",
@@ -103,7 +103,7 @@ export const listInterestByOpportunity = async (uuid) => {
     })
     .populate({
       path: "userId",
-      select: "name contactNumber email role",
+      select: "name phone_number email role",
     })
     .select("-__v -_id -createdAt");
 
@@ -113,9 +113,9 @@ export const listInterestByOpportunity = async (uuid) => {
     deadline: interest.opportunityId.deadline,
     description: interest.opportunityId.description,
     mode: interest.opportunityId.mode,
-    contact: interest.opportunityId.contact,
+    contact: interest.opportunityId.email,
     userName: interest.userId.name,
-    userContact: interest.userId.contactNumber,
+    userContact: interest.userId.phone_number,
     userEmail: interest.userId.email,
     userRole: interest.userId.role,
   }));

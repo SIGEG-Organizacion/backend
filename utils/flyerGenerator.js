@@ -14,25 +14,45 @@ export const generateFlyerPDF = (opportunity, companyLogoUrl, outputPath) => {
     doc.fontSize(20).text("¡Nueva Oportunidad!", { align: "center" });
     doc.moveDown();
 
-    doc.fontSize(16).font('Helvetica-Bold').text('Descripción:', { align: 'center' });
-    doc.fontSize(14).font('Helvetica').text(opportunity.description, { align: 'center' });
+    doc
+      .fontSize(16)
+      .font("Helvetica-Bold")
+      .text("Descripción:", { align: "center" });
+    doc
+      .fontSize(14)
+      .font("Helvetica")
+      .text(opportunity.description, { align: "center" });
     doc.moveDown();
 
-    doc.fontSize(16).font('Helvetica-Bold').text('Requisitos:', { align: 'center' });
-    opportunity.requirements.forEach(req => {
-      doc.fontSize(14).font('Helvetica').text(`- ${req}`, { align: 'center' });
+    doc
+      .fontSize(16)
+      .font("Helvetica-Bold")
+      .text("Requisitos:", { align: "center" });
+    opportunity.requirements.forEach((req) => {
+      doc.fontSize(14).font("Helvetica").text(`- ${req}`, { align: "center" });
     });
     doc.moveDown();
 
-    doc.fontSize(16).font('Helvetica-Bold').text('Beneficios:', { align: 'center' });
-    opportunity.benefits.forEach(benefit => {
-      doc.fontSize(14).font('Helvetica').text(`- ${benefit}`, { align: 'center' });
+    doc
+      .fontSize(16)
+      .font("Helvetica-Bold")
+      .text("Beneficios:", { align: "center" });
+    opportunity.benefits.forEach((benefit) => {
+      doc
+        .fontSize(14)
+        .font("Helvetica")
+        .text(`- ${benefit}`, { align: "center" });
     });
     doc.moveDown();
 
-    doc.fontSize(14).font('Helvetica').text(`Modalidad: ${opportunity.mode}`, { align: 'center' });
-    doc.text(`Fecha límite: ${new Date(opportunity.deadline).toDateString()}`, { align: 'center' });
-    doc.text(`Contacto: ${opportunity.contact}`, { align: 'center' });
+    doc
+      .fontSize(14)
+      .font("Helvetica")
+      .text(`Modalidad: ${opportunity.mode}`, { align: "center" });
+    doc.text(`Fecha límite: ${new Date(opportunity.deadline).toDateString()}`, {
+      align: "center",
+    });
+    doc.text(`Contacto: ${opportunity.email}`, { align: "center" });
     doc.moveDown();
 
     if (companyLogoUrl) {

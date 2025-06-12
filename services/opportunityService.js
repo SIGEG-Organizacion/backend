@@ -65,19 +65,46 @@ export const updateOpportunityFields = async (
   if (!opportunity) {
     throw AppError.notFound("Not Found: opportunity  doesnt exists");
   }
+
   // update only the provided fields
   if (description) opportunity.description = description;
   if (requirements) opportunity.requirements = requirements;
   if (benefits) opportunity.benefits = benefits;
   if (mode) opportunity.mode = mode;
-  if (deadline) opportunity.deadline = deadline;
-  if (email) opportunity.contact = email;
+  if (deadline) opportunity.deadline = new Date(deadline);
+  if (email) opportunity.email = email;
   if (status) {
     opportunity.status = status;
-    //update flyer status to active/inactive to reflect the opportunity status
+    const flyer = await Flyer.findOne({ opportunityId: opportunity._id });
+    if (!flyer) throw AppError.notFound("Flyer no encontrado");
+    flyer.status = status === "open" ? "active" : "inactive";
+    await flyer.save();
   }
-  if (forStudents) {
+  if (typeof forStudents === "boolean") {
     opportunity.forStudents = forStudents;
+  }
+
+  // Regenerar el flyer sólo si cambió contenido relevante
+  // 4) Regenerar PDF sólo si cambió contenido relevante
+  const contentChanged = [
+    description,
+    requirements,
+    benefits,
+    mode,
+    deadline,
+    forStudents,
+    opportunity.logoUrl,
+  ].some((x) => x !== undefined);
+
+  if (contentChanged) {
+    const oldFlyer = await Flyer.findOne({ opportunityId: opportunity._id });
+    if (!oldFlyer) throw AppError.notFound("Flyer no encontrado");
+    const newFlyer = await createFlyer(
+      opportunity._id,
+      oldFlyer.format,
+      opportunity.logoUrl
+    );
+    opportunity.flyerUrl = newFlyer.url;
   }
   const updated = await opportunity.save();
   return updated;

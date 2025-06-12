@@ -37,7 +37,7 @@ export const getUserInterests = async (req, res) => {
 
       .populate({
         path: "opportunityId",
-        select: "companyId deadline description mode contact uuid",
+        select: "companyId deadline description mode email uuid",
         populate: [
           {
             path: "companyId",
@@ -51,7 +51,7 @@ export const getUserInterests = async (req, res) => {
       })
       .populate({
         path: "userId",
-        select: "name contactNumber email role",
+        select: "name phone_number email role",
       })
       .select("-__v -_id -createdAt");
 
@@ -61,9 +61,9 @@ export const getUserInterests = async (req, res) => {
       deadline: interest.opportunityId.deadline,
       description: interest.opportunityId.description,
       mode: interest.opportunityId.mode,
-      contact: interest.opportunityId.contact,
+      contact: interest.opportunityId.email,
       userName: interest.userId.name,
-      userContact: interest.userId.contactNumber,
+      userContact: interest.userId.phone_number,
       userEmail: interest.userId.email,
       userRole: interest.userId.role,
     }));
