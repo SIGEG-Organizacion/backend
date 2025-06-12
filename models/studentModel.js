@@ -24,6 +24,11 @@ const studentSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+
+  graduated: {
+    type: Boolean,
+    default: false, 
+  },
 });
 
 studentSchema.methods.populateApplications = async function () {

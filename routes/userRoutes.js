@@ -35,17 +35,23 @@ const apiLimiter = rateLimit({
 
 const router = express.Router();
 
+//Students
 router.post("/register", validateRequest(validateCreateUser), registerUser);
 router.post(
   "/createStudent",
   validateRequest(validateCreateStudent),
   createStudentUser
 );
+
+
+//Company
 router.post(
   "/createCompany",
   validateRequest(validateCreateCompany),
   createCompanyUser
 );
+
+
 router.post("/login", validateRequest(validateLogin), loginUser);
 router.post(
   "/forgot-password",
