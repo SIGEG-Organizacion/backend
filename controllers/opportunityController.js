@@ -61,9 +61,7 @@ export const createPublication = async (req, res, next) => {
       flyer = await createFlyer(opportunity._id, format, logoPath || null);
       opportunity.flyerUrl = flyer.url;
       await opportunity.save();
-    }
-    if (logoPath !== null) {
-      fs.unlinkSync(logoPath);
+      if (logoPath) fs.unlinkSync(logoPath);
     }
     res.status(201).json({
       message: "Opportunity created successfully",
