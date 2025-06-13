@@ -1,3 +1,4 @@
+//services/reports/opportunityStatusStats.js
 import {
   filterByCompany,
   filterByDateRange,
@@ -85,13 +86,6 @@ export const reportOpportunityStats = async (
   groupBy
 ) => {
   try {
-    if (groupBy && !["day", "month"].includes(groupBy)) {
-      throw new AppError(
-        "Invalid groupBy value. Use 'day', 'month', or null.",
-        400
-      );
-    }
-
     let filter = {};
 
     filter = await filterByCompany(filter, companyName);

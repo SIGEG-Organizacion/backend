@@ -1,17 +1,23 @@
+//controllers/reportController.js
 import { reportOpportunitiesNumbers } from "../services/reports/opportunityNumbersStats.js";
 import { reportOpportunityStats } from "../services/reports/opportunityStatusStats.js";
 import { reportInterestStats } from "../services/reports/opportunityApplicationsStats.js";
 import { reportUserStats } from "../services/reports/usersNumbersStats.js";
 
 export const generateReportOpportunitiesNumbers = async (req, res, next) => {
-  const { startDate, endDate, companyName, groupBy } = req.query; // 'day', 'month', or undefined for no  } =
-  const forStudents = req.user.role === "adminTFG" ? true : false;
+  const { startDate, endDate, companyName, groupBy } = req.query;
+
+  let forStudents = false; 
+  if (req.user.role === "adminTFG") {
+    forStudents = true; 
+  }
+
   try {
     const report = await reportOpportunitiesNumbers(
       startDate,
       endDate,
       companyName,
-      forStudents,
+      forStudents,  
       groupBy
     );
     res.status(200).json({ data: report });
@@ -21,19 +27,18 @@ export const generateReportOpportunitiesNumbers = async (req, res, next) => {
 };
 
 export const generateReportOpportunitiesStatus = async (req, res, next) => {
-  const { startDate, endDate, companyName, groupBy, status, forStudents } =
-    req.query;
+  const { startDate, endDate, companyName, groupBy, status } = req.query;
+
+  // Dependiendo del rol, se activa el filtro forStudents
+  let forStudentsRealValue = req.user.role === "adminTFG" ? true : false;
+
   try {
-    let forStudensRealValue = forStudents;
-    if (req.user.role !== "company") {
-      forStudensRealValue = req.user.role === "adminTFG" ? true : false;
-    }
     const report = await reportOpportunityStats(
       startDate,
       endDate,
       companyName,
       status,
-      undefined,
+      forStudentsRealValue, 
       groupBy
     );
     res.status(200).json({ data: report });
@@ -78,7 +83,7 @@ export const generateReportInterest = async (req, res, next) => {
       uuid,
       startDate,
       endDate,
-      undefined,
+      forStudentsValue, 
       status,
       companyName
     );

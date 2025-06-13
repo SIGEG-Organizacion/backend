@@ -1,11 +1,12 @@
+//services/reports/opportunityNumbersStats.js
+import Opportunity from "../../models/opportunityModel.js";
+import Report from "../../models/reportModel.js";
+import { AppError } from "../../utils/AppError.js";
 import {
   filterByCompany,
   filterByDateRange,
   filterByStudentStatus,
 } from "./reportServiceUtils.js";
-
-import Opportunity from "../../models/opportunityModel.js";
-import Report from "../../models/reportModel.js";
 
 const groupByTimePeriod = async (filter, groupBy) => {
   if (!groupBy) {
@@ -80,11 +81,7 @@ export const reportOpportunitiesNumbers = async (
 
     filter = await filterByCompany(filter, companyName);
     filter = filterByDateRange(filter, startDate, endDate);
-    filter = filterByStudentStatus(filter, forStudents);
-
-    if (Object.keys(filter).length === 0) {
-      console.warn("No filters applied. Processing all opportunities.");
-    }
+    filter = filterByStudentStatus(filter, forStudents);  
 
     const groupedData = await groupByTimePeriod(filter, groupBy);
 
