@@ -19,7 +19,7 @@ const router = express.Router();
 router.get(
   "/numberOpportunitiesCreated",
   protect,
-  authorizeRoles("adminLink", "vadminTFG"),
+  authorizeRoles("adminLink", "adminTFG"),
   validateRequest(opportunitiesNumbersValidator),
   generateReportOpportunitiesNumbers
 );
@@ -27,7 +27,7 @@ router.get(
 router.get(
   "/statusOpportunities",
   protect,
-  authorizeRoles("adminLink", "vadminTFG", "company"),
+  authorizeRoles("adminLink", "adminTFG", "company"),
   validateRequest(opportunityStatsValidator),
   generateReportOpportunitiesStatus
 );
@@ -35,7 +35,7 @@ router.get(
 router.get(
   "/interest",
   protect,
-  authorizeRoles("adminLink", "vadminTFG", "company"),
+  authorizeRoles("adminLink", "adminTFG", "company"),
   validateRequest(interestStatsValidator),
   generateReportInterest
 );
@@ -43,7 +43,7 @@ router.get(
 router.get(
   "/users",
   protect,
-  authorizeRoles("adminLink", "vadminTFG"),
+  authorizeRoles("adminLink", "adminTFG"),
   validateRequest(usersNumbersValidator),
   generateReportUsers
 );

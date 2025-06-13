@@ -20,7 +20,7 @@ export const phoneValidator = body("phone_number")
 
 export const roleValidator = body("role")
   .notEmpty()
-  .isIn(["student", "company", "vadminTFG", "adminLink", "graduate"])
+  .isIn(["student", "company", "adminTFG", "adminLink", "graduate"])
   .withMessage("Invalid role");
 
 export const actionValidator = body("action")

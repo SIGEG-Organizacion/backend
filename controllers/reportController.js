@@ -5,7 +5,7 @@ import { reportUserStats } from "../services/reports/usersNumbersStats.js";
 
 export const generateReportOpportunitiesNumbers = async (req, res, next) => {
   const { startDate, endDate, companyName, groupBy } = req.query; // 'day', 'month', or undefined for no  } =
-  const forStudents = req.user.role === "vadminTFG" ? true : false;
+  const forStudents = req.user.role === "adminTFG" ? true : false;
   try {
     const report = await reportOpportunitiesNumbers(
       startDate,
@@ -26,7 +26,7 @@ export const generateReportOpportunitiesStatus = async (req, res, next) => {
   try {
     let forStudensRealValue = forStudents;
     if (req.user.role !== "company") {
-      forStudensRealValue = req.user.role === "vadminTFG" ? true : false;
+      forStudensRealValue = req.user.role === "adminTFG" ? true : false;
     }
     const report = await reportOpportunityStats(
       startDate,
@@ -59,7 +59,7 @@ export const generateReportInterest = async (req, res, next) => {
   try {
     let forStudentsValue;
     if (req.user.role !== "company") {
-      forStudentsValue = req.user.role === "vadminTFG";
+      forStudentsValue = req.user.role === "adminTFG";
     }
     if (req.user.role === "company") {
       if (!companyName) {

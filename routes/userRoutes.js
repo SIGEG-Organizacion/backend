@@ -43,14 +43,12 @@ router.post(
   createStudentUser
 );
 
-
 //Company
 router.post(
   "/createCompany",
   validateRequest(validateCreateCompany),
   createCompanyUser
 );
-
 
 router.post("/login", validateRequest(validateLogin), loginUser);
 router.post(
@@ -68,7 +66,7 @@ router.post(
 router.put(
   "/manage",
   protect,
-  authorizeRoles("adminLink", "vadminTFG"),
+  authorizeRoles("adminLink", "adminTFG"),
   validateRequest(validateUserAcces),
   manageUserAccess
 );
@@ -82,7 +80,7 @@ router.get("/me", protect, getCurrentUser);
 router.get(
   "/",
   protect,
-  authorizeRoles("adminLink", "vadminTFG"),
+  authorizeRoles("adminLink", "adminTFG"),
   async (req, res) => {
     const users = await User.find().select(
       "-password -_id -__v -resetToken -resetTokenExpire"
@@ -93,7 +91,7 @@ router.get(
 router.put(
   "/changeRole/:email",
   protect,
-  authorizeRoles("vadminTFG"),
+  authorizeRoles("adminTFG"),
   validateRequest([roleValidator]),
   async (req, res) => {
     const { role } = req.body;

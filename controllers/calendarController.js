@@ -125,7 +125,7 @@ export const approveRequest = async (req, res, next) => {
 export const getRequests = async (req, res, next) => {
   try {
     const { role, _id: userId } = req.user;
-    const isAdminRole = role === "adminLink" || role === "vadminTFG";
+    const isAdminRole = role === "adminLink" || role === "adminTFG";
     const filterKey = isAdminRole ? "adminId" : "companyId";
 
     const requests = await listRequests({ [filterKey]: userId });

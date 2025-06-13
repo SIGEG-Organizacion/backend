@@ -31,7 +31,7 @@ const router = express.Router();
 router.get(
   "/google/auth",
   protect,
-  authorizeRoles("adminLink", "vadminTFG"),
+  authorizeRoles("adminLink", "adminTFG"),
   (req, res) => {
     const url = oauth2Client.generateAuthUrl({
       access_type: "offline",
@@ -78,7 +78,7 @@ router.get("/google/callback", async (req, res, next) => {
 router.get(
   "/google/events",
   protect,
-  authorizeRoles("adminLink", "vadminTFG"),
+  authorizeRoles("adminLink", "adminTFG"),
   async (req, res, next) => {
     try {
       const events = await listGoogleEvents(req.user._id);
@@ -92,7 +92,7 @@ router.get(
 router.get(
   "/availabilitySlots",
   protect,
-  authorizeRoles("adminLink", "vadminTFG", "company"),
+  authorizeRoles("adminLink", "adminTFG", "company"),
   validateRequest(listSlotsValidator),
   listSlots
 );
@@ -100,7 +100,7 @@ router.get(
 router.post(
   "/availabilitySlots",
   protect,
-  authorizeRoles("adminLink", "vadminTFG"),
+  authorizeRoles("adminLink", "adminTFG"),
   validateRequest(createSlotValidator),
   createSlot
 );
@@ -108,14 +108,14 @@ router.delete(
   "/availabilitySlots/:slotId",
   protect,
   validateRequest(deleteSlotValidator),
-  authorizeRoles("adminLink", "vadminTFG"),
+  authorizeRoles("adminLink", "adminTFG"),
   deleteSlot
 );
 router.put(
   "/availabilitySlots/:slotId",
   protect,
   validateRequest(updateSlotValidator),
-  authorizeRoles("adminLink", "vadminTFG"),
+  authorizeRoles("adminLink", "adminTFG"),
   updateSlot
 );
 
@@ -133,14 +133,14 @@ router.delete(
   "/request/:requestId",
   protect,
   validateRequest(requestIdParamValidator),
-  authorizeRoles("adminLink", "vadminTFG"),
+  authorizeRoles("adminLink", "adminTFG"),
   denyRequest
 );
 router.put(
   "/request/:requestId/approve",
   protect,
   validateRequest(requestIdParamValidator),
-  authorizeRoles("adminLink", "vadminTFG"),
+  authorizeRoles("adminLink", "adminTFG"),
   approveRequest
 );
 
@@ -148,7 +148,7 @@ router.put(
 router.get(
   "/request",
   protect,
-  authorizeRoles("company", "adminLink", "vadminTFG"),
+  authorizeRoles("company", "adminLink", "adminTFG"),
   getRequests
 );
 
