@@ -129,7 +129,7 @@ const generateResetToken = () => {
 };
 
 export const manageUser = async (email, action) => {
-  const user = await User.findOne({ email }).select("-_id -__v");
+  const user = await User.findOne({ email });
   if (!user) {
     throw AppError.notFound("User not found");
   }
