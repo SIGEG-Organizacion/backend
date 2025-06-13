@@ -79,7 +79,8 @@ export const createStudent = async (email, major, admissionYear) => {
 };
 
 export const login = async (email, password) => {
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email: email });
+  console.log(email);
   if (!user) {
     throw AppError.notFound("Invalid credentials: user not found");
   }

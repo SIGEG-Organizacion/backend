@@ -37,14 +37,14 @@ router.post(
 router.put(
   "/update/:uuid",
   protect,
-  authorizeRoles("company", "adminLink"),
+  authorizeRoles("company", "adminTFG", "adminLink"),
   validateRequest(updateOpportunityValidation),
   updateOpportunity
 );
 router.delete(
   "/delete/:uuid",
   protect,
-  authorizeRoles("company", "adminLink"),
+  authorizeRoles("company", "adminTFG", "adminLink"),
   validateRequest([uuidValidator]),
   deleteOpportunity
 );
