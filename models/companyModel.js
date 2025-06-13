@@ -6,7 +6,6 @@ const companySchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   sector: { type: String, required: true },
   address: { type: String, required: true },
-  logoUrl: { type: String }, // URL del logo
 });
 
 companySchema.pre('remove', async function (next) {
