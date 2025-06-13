@@ -29,8 +29,10 @@ export const generateReportOpportunitiesNumbers = async (req, res, next) => {
 export const generateReportOpportunitiesStatus = async (req, res, next) => {
   const { startDate, endDate, companyName, groupBy, status } = req.query;
 
-  // Dependiendo del rol, se activa el filtro forStudents
-  let forStudentsRealValue = req.user.role === "adminTFG" ? true : false;
+  let forStudents = false;
+  if (req.user.role === "adminTFG") {
+    forStudents = true; 
+  }
 
   try {
     const report = await reportOpportunityStats(
@@ -38,7 +40,7 @@ export const generateReportOpportunitiesStatus = async (req, res, next) => {
       endDate,
       companyName,
       status,
-      forStudentsRealValue, 
+      forStudents, 
       groupBy
     );
     res.status(200).json({ data: report });
@@ -58,14 +60,15 @@ export const generateReportUsers = async (req, res, next) => {
 };
 
 export const generateReportInterest = async (req, res, next) => {
-  const { startDate, endDate, status, companyName, forStudents, uuid } =
-    req.query;
+  const { startDate, endDate, status, companyName, uuid } = req.query;
+
+
+  let forStudents = false;
+  if (req.user.role === "adminTFG") {
+    forStudents = true; 
+  }
 
   try {
-    let forStudentsValue;
-    if (req.user.role !== "company") {
-      forStudentsValue = req.user.role === "adminTFG";
-    }
     if (req.user.role === "company") {
       if (!companyName) {
         return res.status(400).json({
@@ -83,7 +86,7 @@ export const generateReportInterest = async (req, res, next) => {
       uuid,
       startDate,
       endDate,
-      forStudentsValue, 
+      forStudents, // Filtro por forStudents determinado por el rol
       status,
       companyName
     );
@@ -96,3 +99,4 @@ export const generateReportInterest = async (req, res, next) => {
     next(err);
   }
 };
+
