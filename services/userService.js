@@ -43,6 +43,10 @@ export const createCompany = async (email, sector, address, logo) => {
       "Invalid credentials: user with innadecuate role"
     );
   }
+  const existingCompany = await Company.findOne({ userId: existingUser._id });
+  if (existingCompany) {
+    throw AppError.conflict("Invalid credentials: user already exists");
+  }
   const company = await Company.create({
     userId: existingUser._id,
     sector,
@@ -61,6 +65,10 @@ export const createStudent = async (email, major, admissionYear) => {
     throw AppError.badRequest(
       "Invalid credentials: user with innadecuate role"
     );
+  }
+  const existingStudents = await Student.findOne({ userId: existingUser._id });
+  if (existingStudents) {
+    throw AppError.conflict("Invalid credentials: user already exists");
   }
   const student = await Student.create({
     userId: existingUser._id,
