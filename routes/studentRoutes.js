@@ -24,14 +24,14 @@ router.get(
 router.delete(
   "/deleteStudent/:email", 
   protect,
-  authorizeRoles("admin"),
+  authorizeRoles("adminLink", "vadminTFG"),
   deleteStudent 
 );
 
 router.put(
   "/graduate/:id", 
   protect,
-  authorizeRoles("admin"), 
+  authorizeRoles("adminLink", "vadminTFG"), 
   markStudentAsGraduated 
 );
 
