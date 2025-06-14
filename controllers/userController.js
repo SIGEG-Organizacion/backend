@@ -106,10 +106,8 @@ export const forgotPassword = async (req, res, next) => {
         String.fromCharCode(Math.floor(Math.random() * (126 - 33)) + 33)
       )
       .join("");
-    // Hashear y guardar
-    user.password = await bcrypt.hash(randomPassword, 10);
+    user.password = randomPassword;
     await user.save();
-    // Enviar correo
     await sendMail({
       to: user.email,
       subject: "Restablecimiento de contraseña SIGEV / Password Reset",
