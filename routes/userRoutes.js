@@ -51,12 +51,7 @@ router.post(
 );
 
 router.post("/login", validateRequest(validateLogin), loginUser);
-router.post(
-  "/forgot-password",
-  apiLimiter,
-  validateRequest(validateGenerateNewToken),
-  forgotPassword
-);
+router.post("/forgot-password", forgotPassword);
 router.post(
   "/reset-password",
   protect,

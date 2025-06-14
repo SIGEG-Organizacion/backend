@@ -8,8 +8,11 @@ import {
   updateProfile,
   resetPasswordWithToken,
 } from "../services/userService.js";
-import { upload } from "../middlewares/fileUpload.js"; 
-import { uploadLogoToB2 } from "../utils/b2Uploader.js"; 
+import { upload } from "../middlewares/fileUpload.js";
+import { uploadLogoToB2 } from "../utils/b2Uploader.js";
+import { sendMail } from "../services/emailService.js";
+import bcrypt from "bcryptjs";
+import User from "../models/userModel.js";
 
 // Register a new user
 export const registerUser = async (req, res, next) => {
@@ -84,16 +87,40 @@ export const loginUser = async (req, res, next) => {
   }
 };
 
-// Forgot password - generate and return reset token
+// POST /api/users/forgot-password
 export const forgotPassword = async (req, res, next) => {
+  const { email } = req.body;
   try {
-    const { email } = req.body;
-    const resetToken = await generateNewToken(email);
-    const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
-    res.json({
-      message: "Password reset link generated",
-      resetUrl, // lo copias desde aquí para hacer reset
+    const user = await User.findOne({ email });
+    // Mensaje genérico para no revelar si el usuario existe
+    const genericMsg = {
+      message: "If the email exists, a new password has been sent.",
+    };
+    if (!user) {
+      return res.status(200).json(genericMsg);
+    }
+    // Generar contraseña random válida (mínimo 8 caracteres, mayúscula, minúscula, número, símbolo)
+    const randomPassword = Array(12)
+      .fill(0)
+      .map(() =>
+        String.fromCharCode(Math.floor(Math.random() * (126 - 33)) + 33)
+      )
+      .join("");
+    // Hashear y guardar
+    user.password = await bcrypt.hash(randomPassword, 10);
+    await user.save();
+    // Enviar correo
+    await sendMail({
+      to: user.email,
+      subject: "Restablecimiento de contraseña SIGEV / Password Reset",
+      html: `<p>Hola,</p>
+        <p>Tu nueva contraseña temporal es: <b>${randomPassword}</b></p>
+        <p>Por favor inicia sesión y cámbiala lo antes posible.</p>
+        <p>Si no solicitaste este cambio, ignora este mensaje.</p>
+        <hr />
+        <p>Hello,<br>Your new temporary password is: <b>${randomPassword}</b><br>Please log in and change it as soon as possible.<br>If you did not request this, please ignore this message.</p>`,
     });
+    return res.status(200).json(genericMsg);
   } catch (err) {
     next(err);
   }
