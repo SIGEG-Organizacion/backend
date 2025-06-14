@@ -54,6 +54,10 @@ export const markStudentAsGraduated = async (req, res, next) => {
     await student.deleteOne();
     user.role = "graduate"; // Cambiar el rol a 'graduate'
     user.save();
+    res.status(200).json({
+      message: "Student marked as graduated and related interests deleted",
+      deletedCount: deleted.deletedCount,
+    });
   } catch (err) {
     next(err);
   }

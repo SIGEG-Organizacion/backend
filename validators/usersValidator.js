@@ -136,7 +136,7 @@ const majorValidator = body("major")
 const admissionYearValidator = body("admissionYear")
   .notEmpty()
   .withMessage("Name is required")
-  .isInt({ min: 2025, max: 4000 });
+  .isInt({ min: 2010, max: 4000 });
 
 export const validateCreateUser = [
   nameValidator,
