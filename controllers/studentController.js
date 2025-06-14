@@ -1,6 +1,7 @@
 //controllers/studentController.js
 import User from "../models/userModel.js";
 import Interest from "../models/interestModel.js";
+import Student from "../models/studentModel.js";
 
 export const getStudentApplications = async (req, res, next) => {
   const { email } = req.params;
@@ -30,33 +31,29 @@ export const deleteStudent = async (req, res, next) => {
 
     await student.remove();
 
-    res.status(200).json({ message: "Student and related interests deleted successfully" });
+    res
+      .status(200)
+      .json({ message: "Student and related interests deleted successfully" });
   } catch (err) {
     next(err);
   }
 };
 
 export const markStudentAsGraduated = async (req, res, next) => {
-  const { id } = req.params;
-
+  const { email } = req.params;
   try {
-    const student = await Student.findById(id);
-    
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const student = await Student.findOne({ userId: user._id });
     if (!student) {
       return res.status(404).json({ message: "Student not found" });
     }
-
-    student.graduated = true;
-    
-    await Interest.deleteMany({ userId: student.userId });
-
-    await student.remove(); 
-
-    // Enviar respuesta
-    res.status(200).json({
-      message: "Student marked as graduated and removed successfully",
-      student,
-    });
+    const deleted = await Interest.deleteMany({ userId: student.userId });
+    await student.deleteOne();
+    user.role = "graduate"; // Cambiar el rol a 'graduate'
+    user.save();
   } catch (err) {
     next(err);
   }

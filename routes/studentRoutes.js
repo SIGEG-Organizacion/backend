@@ -32,7 +32,7 @@ router.delete(
 );
 
 router.put(
-  "/graduate/:id",
+  "/graduate/:email",
   protect,
   authorizeRoles("adminLink", "adminTFG"),
   markStudentAsGraduated
