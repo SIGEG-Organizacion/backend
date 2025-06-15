@@ -1,6 +1,7 @@
 import PDFDocument from "pdfkit";
 import fs from "fs";
 import path from "path";
+import { createCanvas, loadImage, registerFont } from "canvas";
 
 export const generateFlyerPDF = (opportunity, companyLogoUrl, outputPath) => {
   return new Promise((resolve, reject) => {
@@ -88,5 +89,124 @@ export const generateFlyerPDF = (opportunity, companyLogoUrl, outputPath) => {
     doc.end();
     writeStream.on("finish", () => resolve(outputPath));
     writeStream.on("error", (err) => reject(err));
+  });
+};
+
+export const generateFlyerPNG = async (
+  opportunity,
+  companyLogoUrl,
+  outputPath
+) => {
+  // Opcional: puedes registrar una fuente personalizada si lo deseas
+  // registerFont('path/to/font.ttf', { family: 'CustomFont' });
+
+  const width = 800;
+  const height = 1131; // Aproximadamente A4 a 72dpi
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext("2d");
+
+  // Fondo blanco
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, width, height);
+
+  // Fecha de creación
+  ctx.font = "16px Courier";
+  ctx.fillStyle = "#666";
+  ctx.textAlign = "right";
+  ctx.fillText(
+    `Fecha de creación: ${new Date().toLocaleDateString()}`,
+    width - 40,
+    40
+  );
+
+  // Logo centrado
+  if (companyLogoUrl) {
+    try {
+      const logo = await loadImage(companyLogoUrl);
+      const logoSize = 100;
+      ctx.drawImage(logo, (width - logoSize) / 2, 60, logoSize, logoSize);
+    } catch (e) {
+      // Si falla el logo, solo ignora
+    }
+  }
+
+  let y = 180;
+  ctx.textAlign = "center";
+  ctx.font = "bold 32px Courier";
+  ctx.fillStyle = "#000";
+  ctx.fillText("¡Nueva Oportunidad!", width / 2, y);
+  y += 50;
+
+  // Sección: Descripción
+  ctx.textAlign = "left";
+  ctx.font = "bold 20px Courier";
+  ctx.fillStyle = "#333";
+  ctx.fillText("Descripción:", 40, y);
+  y += 28;
+  ctx.font = "16px Courier";
+  ctx.fillStyle = "#000";
+  ctx.fillText(opportunity.description, 40, y, width - 80);
+  y += 40;
+
+  // Sección: Requisitos
+  ctx.font = "bold 20px Courier";
+  ctx.fillStyle = "#333";
+  ctx.fillText("Requisitos:", 40, y);
+  y += 28;
+  ctx.font = "16px Courier";
+  ctx.fillStyle = "#000";
+  if (Array.isArray(opportunity.requirements)) {
+    opportunity.requirements.forEach((req) => {
+      ctx.fillText(`• ${req}`, 60, y, width - 100);
+      y += 24;
+    });
+  }
+  y += 10;
+
+  // Sección: Beneficios
+  ctx.font = "bold 20px Courier";
+  ctx.fillStyle = "#333";
+  ctx.fillText("Beneficios:", 40, y);
+  y += 28;
+  ctx.font = "16px Courier";
+  ctx.fillStyle = "#000";
+  if (Array.isArray(opportunity.benefits)) {
+    opportunity.benefits.forEach((benefit) => {
+      ctx.fillText(`• ${benefit}`, 60, y, width - 100);
+      y += 24;
+    });
+  }
+  y += 10;
+
+  // Sección: Detalles
+  ctx.font = "bold 20px Courier";
+  ctx.fillStyle = "#333";
+  ctx.fillText("Detalles:", 40, y);
+  y += 28;
+  ctx.font = "16px Courier";
+  ctx.fillStyle = "#000";
+  ctx.fillText(`Modalidad: ${opportunity.mode}`, 60, y);
+  y += 24;
+  ctx.fillText(
+    `Fecha límite: ${new Date(opportunity.deadline).toLocaleDateString()}`,
+    60,
+    y
+  );
+  y += 24;
+  ctx.fillText(`Contacto: ${opportunity.email}`, 60, y);
+  y += 24;
+  ctx.fillText(
+    `Para estudiantes: ${opportunity.forStudents ? "Sí" : "No"}`,
+    60,
+    y
+  );
+
+  // Guardar como PNG
+  const out = fs.createWriteStream(outputPath);
+  const stream = canvas.createPNGStream();
+  stream.pipe(out);
+  return new Promise((resolve, reject) => {
+    out.on("finish", () => resolve(outputPath));
+    out.on("error", reject);
   });
 };

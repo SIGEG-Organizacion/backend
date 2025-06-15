@@ -1,4 +1,4 @@
-import { generateFlyerPDF } from "../utils/flyerGenerator.js";
+import { generateFlyerPDF, generateFlyerPNG } from "../utils/flyerGenerator.js";
 import Opportunity from "../models/opportunityModel.js";
 import Flyer from "../models/flyerModel.js";
 import { uploadFileToB2 } from "../utils/b2Uploader.js";
@@ -15,21 +15,27 @@ export const createFlyer = async (opportunityId, format, logoUrl) => {
   }
 
   // Definir la ruta de salida para el archivo generado
-  const outputPath = path.resolve(`./temp/flyer_${opportunity.uuid}.${format}`);
+  const ext = format && format.toLowerCase() === "png" ? "png" : "pdf";
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const outputPath = path.resolve(
+    `./temp/flyer_${opportunity.uuid}_${timestamp}.${ext}`
+  );
 
   // Verificar que la carpeta temporal exista, si no, crearla
   if (!fs.existsSync(path.resolve("./temp"))) {
     fs.mkdirSync(path.resolve("./temp"));
-    console.log("Temporary folder created: ./temp"); // Log para verificar la creación
   }
-  console.log("T10");
 
-  // Generar el PDF
-  await generateFlyerPDF(opportunity, logoUrl, outputPath);
-  console.log("T11");
+  // Generar el archivo en el formato adecuado
+  if (ext === "pdf") {
+    await generateFlyerPDF(opportunity, logoUrl, outputPath);
+  } else {
+    await generateFlyerPNG(opportunity, logoUrl, outputPath);
+  }
 
-  const fileName = `flyers/flyer_${opportunity.uuid}.${format}`;
-  const signedUrl = await uploadFileToB2(outputPath, fileName);
+  // Subir el archivo a Backblaze B2 y obtener la ruta
+  const fileName = `flyers/flyer_${opportunity.uuid}_${timestamp}.${ext}`;
+  await uploadFileToB2(outputPath, fileName);
 
   // Crear o actualizar el documento de flyer en MongoDB
   let flyer = await Flyer.findOne({ opportunityId });
@@ -37,14 +43,16 @@ export const createFlyer = async (opportunityId, format, logoUrl) => {
     flyer = new Flyer({
       opportunityId,
       status: "active",
-      format,
-      url: signedUrl,
+      format: ext,
+      url: fileName, // Guardamos solo la ruta
       content: opportunity.description,
     });
   } else {
-    flyer.url = signedUrl;
+    flyer.url = fileName;
     flyer.status = "active";
+    flyer.format = ext;
   }
+  console.log("Flyer URL in flyer:", flyer.url);
 
   // Guardar el flyer en la base de datos
   await flyer.save();
@@ -52,5 +60,5 @@ export const createFlyer = async (opportunityId, format, logoUrl) => {
   // Limpiar el archivo temporal local
   fs.unlinkSync(outputPath);
 
-  return flyer;
+  return flyer.toObject();
 };

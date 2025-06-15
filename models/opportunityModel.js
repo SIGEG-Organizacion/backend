@@ -60,7 +60,7 @@ const opportunitySchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: true,  
+    required: true,
     validate: {
       validator: function (v) {
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -80,8 +80,10 @@ const opportunitySchema = new mongoose.Schema({
     required: true,
   },
   flyerUrl: {
+    // Ahora almacena solo la ruta (key) del archivo en B2, no la URL firmada
     type: String,
     required: false,
+    // Ejemplo: 'flyers/flyer_xxx.pdf'
   },
   forStudents: {
     type: Boolean,
@@ -94,7 +96,7 @@ const opportunitySchema = new mongoose.Schema({
 });
 
 // Middleware para eliminar los intereses relacionados cuando la oportunidad se elimina
-opportunitySchema.pre('remove', async function(next) {
+opportunitySchema.pre("remove", async function (next) {
   try {
     await Interest.deleteMany({ opportunityId: this._id });
     next();

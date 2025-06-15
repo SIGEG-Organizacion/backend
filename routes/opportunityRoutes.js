@@ -8,6 +8,7 @@ import {
   getOpportunity,
   filterOpportunities,
   getOpportunities,
+  getFlyerSignedUrl,
 } from "../controllers/opportunityController.js";
 import { validateRequest } from "../middlewares/validatorMiddleware.js";
 import {
@@ -36,6 +37,10 @@ router.post(
 
 router.put(
   "/update/:uuid",
+  upload.fields([
+    { name: "logo", maxCount: 1 },
+    { name: "document", maxCount: 1 },
+  ]),
   protect,
   authorizeRoles("company", "adminTFG", "adminLink"),
   validateRequest(updateOpportunityValidation),
@@ -68,5 +73,6 @@ router.get(
   filterOpportunities
 );
 router.get("/:uuid", protect, validateRequest([uuidValidator]), getOpportunity);
+router.get("/flyer/signed-url", protect, getFlyerSignedUrl);
 
 export default router;

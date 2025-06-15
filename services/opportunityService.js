@@ -194,6 +194,7 @@ export const getOpportunityService = async (uuid) => {
   if (!opportunity) {
     throw AppError.notFound("Opportunity not found");
   }
+  console.log("Opportunity flyer:", opportunity.flyerUrl);
   return opportunity;
 };
 
@@ -265,7 +266,7 @@ export const createFlyer = async (opportunityId, format) => {
       content: opportunity.description,
     });
   } else {
-    flyer.url = signedUrl; // Si ya existe, actualizamos la URL firmada
+    flyer.url = fileName; // Si ya existe, actualizamos la URL firmada
     flyer.status = "active";
   }
 

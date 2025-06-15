@@ -15,12 +15,11 @@ const flyerSchema = new mongoose.Schema({
   format: {
     type: String,
     required: true,
-    enum: ["PDF", "JPG"],
   }, // "PDF", "Image", etc.
   url: {
-  type: String,
-  required: false,
-}
+    type: String,
+    required: false,
+  },
 });
 
 const Flyer = mongoose.model("Flyer", flyerSchema);

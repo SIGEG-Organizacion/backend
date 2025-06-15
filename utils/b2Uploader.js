@@ -96,3 +96,14 @@ export const uploadLogoToB2 = async (filePath, fileName) => {
     throw new Error(`Error uploading logo to B2: ${err.message}`);
   }
 };
+
+export const getSignedUrlFromB2 = (key, expiresIn = 3600) => {
+  if (!process.env.B2_BUCKET_NAME) {
+    throw new Error("Missing Backblaze Bucket Name in environment variables.");
+  }
+  return s3.getSignedUrl("getObject", {
+    Bucket: process.env.B2_BUCKET_NAME,
+    Key: key,
+    Expires: expiresIn,
+  });
+};
