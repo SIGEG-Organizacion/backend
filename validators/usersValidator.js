@@ -164,7 +164,7 @@ export const validateCreateCompany = [
   body("address").notEmpty().withMessage("Adress is required"),
 ];
 
-export const validateLogin = [emailValidator, passwordValidator];
+export const validateLogin = [emailValidator];
 export const validateGenerateNewToken = [emailValidator];
 export const validateResetPassword = [
   body("token").notEmpty().withMessage("Token is required"),
