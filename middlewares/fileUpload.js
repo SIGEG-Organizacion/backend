@@ -12,7 +12,6 @@ const storage = multer.diskStorage({
     cb(null, uploadPath);
   },
   filename(req, file, cb) {
-    // Ej: logo-1623456789012-123.png  ó  flyer-1623456789012-123.pdf
     const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
     const ext = path.extname(file.originalname).toLowerCase();
     const prefix = file.fieldname === "logo" ? "logo" : "flyer";

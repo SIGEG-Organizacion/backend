@@ -43,15 +43,18 @@ export const createPublication = async (req, res, next) => {
     );
 
     let logoPath = null;
+    let logoKey = null;
     if (req.files?.logo?.[0]) {
       const logoFile = req.files.logo[0];
-      const logoKey = `logos/logo_${
-        opportunity.uuid
-      }_${Date.now()}${path.extname(logoFile.originalname)}`;
-      const logoUrl = await uploadLogoToB2(logoFile.path, logoKey);
-      logoPath = logoFile.path;
-      opportunity.logoUrl = logoUrl;
+      logoKey = `logos/logo_${opportunity.uuid}_${Date.now()}${path.extname(
+        logoFile.originalname
+      )}`;
+      await uploadLogoToB2(logoFile.path, logoKey); // Solo sube, no retorna URL
+      opportunity.logoUrl = logoKey; // Guardar solo el key
       await opportunity.save();
+      // Borrar archivo local
+      if (logoFile.path && fs.existsSync(logoFile.path))
+        fs.unlinkSync(logoFile.path);
     }
     let flyer = null;
     let flyerKey = null;
@@ -61,14 +64,17 @@ export const createPublication = async (req, res, next) => {
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
       flyerKey = `flyers/flyer_${opportunity.uuid}_${timestamp}.${ext}`;
       await uploadDocumentToB2(docFile, opportunity.uuid, flyerKey);
+      // Borrar archivo local
+      if (docFile.path && fs.existsSync(docFile.path))
+        fs.unlinkSync(docFile.path);
     } else {
-      console.log(logoPath);
-      flyer = await createFlyer(opportunity._id, format, logoPath || null);
-      console.log("Flyer created:", flyer);
+      flyer = await createFlyer(
+        opportunity._id,
+        format,
+        logoKey || opportunity.logoUrl || null
+      );
       flyerKey = flyer.url;
-      if (logoPath) fs.unlinkSync(logoPath);
     }
-    console.log("Flyer Key:", flyerKey);
     if (flyerKey) {
       opportunity.flyerUrl = flyerKey;
       await opportunity.save();
@@ -149,7 +155,12 @@ export const getOpportunitiesByCompany = async (req, res, next) => {
 
 export const getOpportunities = async (req, res, next) => {
   try {
-    const opportunities = await Opportunity.find()
+    let filter = {};
+    console.log("User role:", req.user.role);
+    if (req.user.role !== "adminLink" && req.user.role !== "adminTFG") {
+      filter = { status: "open" };
+    }
+    const opportunities = await Opportunity.find(filter)
       .populate({
         path: "companyId",
         select: "address sector -_id",

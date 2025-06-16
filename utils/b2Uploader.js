@@ -107,3 +107,21 @@ export const getSignedUrlFromB2 = (key, expiresIn = 3600) => {
     Expires: expiresIn,
   });
 };
+
+export const downloadFileFromB2 = async (key, downloadPath) => {
+  if (!process.env.B2_BUCKET_NAME) {
+    throw new Error("Missing Backblaze Bucket Name in environment variables.");
+  }
+  const params = {
+    Bucket: process.env.B2_BUCKET_NAME,
+    Key: key,
+  };
+  const file = fs.createWriteStream(downloadPath);
+  return new Promise((resolve, reject) => {
+    s3.getObject(params)
+      .createReadStream()
+      .on("end", () => resolve(downloadPath))
+      .on("error", reject)
+      .pipe(file);
+  });
+};

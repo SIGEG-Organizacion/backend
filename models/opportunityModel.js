@@ -72,7 +72,7 @@ const opportunitySchema = new mongoose.Schema({
   status: {
     type: String,
     required: true,
-    enum: ["pending-approval", "closed", "open"],
+    enum: ["pending-approval", "rejected", "closed", "open"],
   },
   uuid: {
     type: String,

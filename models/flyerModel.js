@@ -11,7 +11,7 @@ const flyerSchema = new mongoose.Schema({
     type: String,
     enum: ["active", "inactive"],
     required: true,
-  }, // "active", "inactive"
+  }, // "active", "inactive", "rejected", "pending-approval"
   format: {
     type: String,
     required: true,

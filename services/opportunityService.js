@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 import User from "../models/userModel.js";
 import Flyer from "../models/flyerModel.js";
 import { generateFlyerPDF } from "../utils/flyerGenerator.js";
-import { uploadFileToB2 } from "../utils/b2Uploader.js";
+import { uploadFileToB2, downloadFileFromB2 } from "../utils/b2Uploader.js";
 import path from "path";
 import fs from "fs";
 import Interest from "../models/interestModel.js";
@@ -65,7 +65,7 @@ export const updateOpportunityFields = async (
   if (!opportunity) {
     throw AppError.notFound("Not Found: opportunity  doesnt exists");
   }
-
+  console.log("T0");
   // update only the provided fields
   if (description) opportunity.description = description;
   if (requirements) {
@@ -80,10 +80,23 @@ export const updateOpportunityFields = async (
   if (deadline) opportunity.deadline = deadline;
   if (email) opportunity.email = email;
   if (status) {
+    if (status === "pending-approval") {
+      console.log("T1");
+      const session = await mongoose.startSession();
+      session.startTransaction();
+      await Interest.deleteMany({ opportunityId: opportunity._id }).session(
+        session
+      );
+      await session.commitTransaction();
+      session.endSession();
+      console.log("T2");
+    }
     opportunity.status = status;
     const flyer = await Flyer.findOne({ opportunityId: opportunity._id });
-    if (!flyer) throw AppError.notFound("Flyer no encontrado");
+    console.log("T3");
+    if (!flyer) throw AppError.notFound("Flyer not found");
     flyer.status = status === "open" ? "active" : "inactive";
+    console.log("T4");
     await flyer.save();
   }
   if (typeof forStudents === "boolean") {
@@ -104,16 +117,19 @@ export const updateOpportunityFields = async (
   console.log("Modified paths:", opportunity.modifiedPaths());
   const updated = await opportunity.save();
   if (contentChanged) {
+    console.log("T5");
     const oldFlyer = await Flyer.findOne({ opportunityId: opportunity._id });
-    if (!oldFlyer) throw AppError.notFound("Flyer no encontrado");
+    if (!oldFlyer) throw AppError.notFound("Flyer not found");
     const newFlyer = await createFlyer(
       opportunity._id,
       oldFlyer.format,
       opportunity.logoUrl
     );
+    console.log("T6");
     opportunity.flyerUrl = newFlyer.url;
+    await opportunity.save(); // <--- Asegura que el nuevo path se persista
   }
-
+  console.log("T8");
   return updated;
 };
 
@@ -223,38 +239,34 @@ export const getOpportunitiesFiltered = async (mode, from, to, sector) => {
   return opportunities;
 };
 
-export const createFlyer = async (opportunityId, format) => {
+export const createFlyer = async (opportunityId, format, logoKey = null) => {
   // Obtener la oportunidad desde la base de datos
   const opportunity = await Opportunity.findById(opportunityId).populate({
     path: "companyId",
   });
-
   if (!opportunity) {
     throw new Error("Opportunity not found");
   }
-
+  // Si se pasa logoKey, descargar el logo desde B2
+  let logoPath = null;
+  if (logoKey) {
+    const cleanLogoKey = logoKey.split("?")[0];
+    logoPath = `./temp/${path.basename(cleanLogoKey)}`;
+    await downloadFileFromB2(cleanLogoKey, logoPath);
+  }
   // Generar el PDF para el flyer
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const outputPath = path.resolve(
     `./temp/flyer_${opportunity.uuid}_${timestamp}.pdf`
   );
-
-  // Verificar que la carpeta temporal exista, si no, crearla
-  if (!fs.existsSync(path.resolve("./temp"))) {
-    fs.mkdirSync(path.resolve("./temp"));
-  }
-
-  // Generar el PDF
   await generateFlyerPDF(
     opportunity,
-    opportunity.companyId.logoUrl,
+    logoPath || opportunity.companyId.logoUrl,
     outputPath
   );
-
-  // Subir el archivo a Backblaze B2 y obtener la URL firmada
+  // Subir el archivo a Backblaze B2 y obtener el path
   const fileName = `flyers/flyer_${opportunity.uuid}_${timestamp}.pdf`;
-  const signedUrl = await uploadFileToB2(outputPath, fileName);
-
+  await uploadFileToB2(outputPath, fileName);
   // Crear o actualizar el documento de flyer en MongoDB
   let flyer = await Flyer.findOne({ opportunityId });
   if (!flyer) {
@@ -262,19 +274,16 @@ export const createFlyer = async (opportunityId, format) => {
       opportunityId,
       status: "active",
       format,
-      url: signedUrl, // Guardamos la URL firmada
+      url: fileName, // Guardar solo el path
       content: opportunity.description,
     });
   } else {
-    flyer.url = fileName; // Si ya existe, actualizamos la URL firmada
+    flyer.url = fileName;
     flyer.status = "active";
   }
-
-  // Guardar el flyer en la base de datos
   await flyer.save();
-
-  // Limpiar el archivo temporal local
-  fs.unlinkSync(outputPath);
-
-  return flyer.toObject(); // Retorna el flyer creado/actualizado
+  // Limpiar archivos temporales
+  if (logoPath && fs.existsSync(logoPath)) fs.unlinkSync(logoPath);
+  if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+  return flyer.toObject();
 };
