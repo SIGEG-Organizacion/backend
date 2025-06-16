@@ -1,7 +1,7 @@
 import { generateFlyerPDF, generateFlyerPNG } from "../utils/flyerGenerator.js";
 import Opportunity from "../models/opportunityModel.js";
 import Flyer from "../models/flyerModel.js";
-import { uploadFileToB2 } from "../utils/b2Uploader.js";
+import { uploadFileToB2, downloadFileFromB2 } from "../utils/b2Uploader.js";
 import fs from "fs";
 import path from "path";
 
@@ -27,13 +27,28 @@ export const createFlyer = async (opportunityId, format, logoUrl) => {
     fs.mkdirSync(path.resolve("./temp"));
   }
 
-  // Generar el archivo en el formato adecuado
-  if (ext === "pdf") {
-    await generateFlyerPDF(opportunity, logoUrl, outputPath);
-  } else {
-    await generateFlyerPNG(opportunity, logoUrl, outputPath);
+  let tempLogoPath = null;
+  let usedLogoPath = logoUrl;
+  // Si logoUrl es una key de B2 (no un path local y no null)
+  if (logoUrl && !fs.existsSync(logoUrl)) {
+    // Descargar el logo de B2 a un archivo temporal
+    const logoExt = path.extname(logoUrl) || ".png";
+    tempLogoPath = path.resolve(
+      `./temp/logo_${opportunity.uuid}_${timestamp}${logoExt}`
+    );
+    console.log("Downloading logo from B2 for flyer generation:", logoUrl);
+    await downloadFileFromB2(logoUrl, tempLogoPath);
+    usedLogoPath = tempLogoPath;
   }
 
+  // Generar el archivo en el formato adecuado
+  if (ext === "pdf") {
+    await generateFlyerPDF(opportunity, usedLogoPath, outputPath);
+  } else {
+    await generateFlyerPNG(opportunity, usedLogoPath, outputPath);
+  }
+
+  console.log("Uploading flyer to Backblaze B2...");
   // Subir el archivo a Backblaze B2 y obtener la ruta
   const fileName = `flyers/flyer_${opportunity.uuid}_${timestamp}.${ext}`;
   await uploadFileToB2(outputPath, fileName);
@@ -60,6 +75,9 @@ export const createFlyer = async (opportunityId, format, logoUrl) => {
 
   // Limpiar el archivo temporal local
   fs.unlinkSync(outputPath);
+  if (tempLogoPath && fs.existsSync(tempLogoPath)) {
+    fs.unlinkSync(tempLogoPath);
+  }
 
   return flyer.toObject();
 };
