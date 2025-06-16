@@ -42,38 +42,40 @@ export const createPublication = async (req, res, next) => {
       forStudents
     );
 
-    let logoPath = null;
     let logoKey = null;
     if (req.files?.logo?.[0]) {
       const logoFile = req.files.logo[0];
       logoKey = `logos/logo_${opportunity.uuid}_${Date.now()}${path.extname(
         logoFile.originalname
       )}`;
-      await uploadLogoToB2(logoFile.path, logoKey); // Solo sube, no retorna URL
-      opportunity.logoUrl = logoKey; // Guardar solo el key
+      await uploadLogoToB2(logoFile.path, logoKey);
+      opportunity.logoUrl = logoKey;
       await opportunity.save();
-      // Borrar archivo local
-      if (logoFile.path && fs.existsSync(logoFile.path))
-        fs.unlinkSync(logoFile.path);
+      // No borrar el archivo local aún si se va a usar para el flyer
     }
     let flyer = null;
     let flyerKey = null;
-    if (req.files?.document?.[0]) {
-      const docFile = req.files.document[0];
-      const ext = path.extname(docFile.originalname).substring(1).toLowerCase();
-      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      flyerKey = `flyers/flyer_${opportunity.uuid}_${timestamp}.${ext}`;
-      await uploadDocumentToB2(docFile, opportunity.uuid, flyerKey);
-      // Borrar archivo local
-      if (docFile.path && fs.existsSync(docFile.path))
-        fs.unlinkSync(docFile.path);
-    } else {
-      flyer = await createFlyer(
-        opportunity._id,
-        format,
-        logoKey || opportunity.logoUrl || null
-      );
-      flyerKey = flyer.url;
+    // Solo se permite la generación automática del flyer, no la subida de documentos
+    let logoPath = null;
+    if (logoKey && req.files?.logo?.[0]) {
+      // Usar el archivo local subido
+      console.log("Using local logo for flyer:", req.files.logo[0].path);
+      logoPath = req.files.logo[0].path;
+    } 
+    console.log("Creating flyer...");
+    flyer = await createFlyer(opportunity._id, format, logoPath || null);
+    flyerKey = flyer.url;
+    // Limpiar logo temporal si fue descargado
+    if (
+      logoPath &&
+      fs.existsSync(logoPath) &&
+      (!req.files?.logo?.[0] || logoPath !== req.files.logo[0].path)
+    ) {
+      fs.unlinkSync(logoPath);
+    }
+    // Si el logo local fue subido, borrarlo después de usarlo
+    if (req.files?.logo?.[0] && fs.existsSync(req.files.logo[0].path)) {
+      fs.unlinkSync(req.files.logo[0].path);
     }
     if (flyerKey) {
       opportunity.flyerUrl = flyerKey;
@@ -114,15 +116,21 @@ export const updateOpportunity = async (req, res, next) => {
       status,
       forStudents
     );
-    // Si se proporciona un nuevo logo, subirlo y actualizar logoUrl
+    let logoKey = null;
     if (req.files?.logo?.[0]) {
       const logoFile = req.files.logo[0];
-      const logoKey = `logos/logo_${uuid}_${Date.now()}${path.extname(
+      logoKey = `logos/logo_${uuid}_${Date.now()}${path.extname(
         logoFile.originalname
       )}`;
-      const logoUrl = await uploadLogoToB2(logoFile.path, logoKey);
-      updated.logoUrl = logoUrl;
+      await uploadLogoToB2(logoFile.path, logoKey);
+      updated.logoUrl = logoKey;
       await updated.save();
+      // No borrar el archivo local aún si se va a usar para el flyer
+    }
+    // Si el contenido cambió y hay que regenerar el flyer, la lógica ya está en updateOpportunityFields
+    // Limpiar logo local si fue subido
+    if (req.files?.logo?.[0] && fs.existsSync(req.files.logo[0].path)) {
+      fs.unlinkSync(req.files.logo[0].path);
     }
     res.status(200).json({
       message: "Opportunity updated successfully",

@@ -36,19 +36,34 @@ const endRangeValidator = body("to")
   .toDate()
   .withMessage("Deadline must be a valid date");
 
+// Adaptadores para form-data: permiten que los campos vengan como string y los convierten
 const requirementsValidator = body("requirements")
+  .customSanitizer((value) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === "string") return value.split(",").map((s) => s.trim());
+    return [];
+  })
   .isArray()
   .withMessage("Requirements must be an array")
   .custom((requirements) => {
-    return requirements.every((item) => typeof item === "string" && item.trim().length > 0);
+    return requirements.every(
+      (item) => typeof item === "string" && item.trim().length > 0
+    );
   })
   .withMessage("Each requirement must be a non-empty string");
 
 const benefitsValidator = body("benefits")
+  .customSanitizer((value) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === "string") return value.split(",").map((s) => s.trim());
+    return [];
+  })
   .isArray()
   .withMessage("Benefits must be an array")
   .custom((benefits) => {
-    return benefits.every((item) => typeof item === "string" && item.trim().length > 0);
+    return benefits.every(
+      (item) => typeof item === "string" && item.trim().length > 0
+    );
   })
   .withMessage("Each benefit must be a non-empty string");
 
@@ -73,9 +88,14 @@ export const uuidValidatorQuery = query("uuid")
   .optional();
 
 export const forStudentsValidator = body("forStudents")
+  .customSanitizer((value) => {
+    if (typeof value === "boolean") return value;
+    if (typeof value === "string") return value === "true";
+    return false;
+  })
   .isBoolean()
   .withMessage("Invalid boolean value")
-  .toBoolean();  
+  .toBoolean();
 
 // Combined validators for different routes
 export const createOpportunityValidation = [

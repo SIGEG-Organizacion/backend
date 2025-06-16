@@ -37,10 +37,7 @@ router.post(
 
 router.put(
   "/update/:uuid",
-  upload.fields([
-    { name: "logo", maxCount: 1 },
-    { name: "document", maxCount: 1 },
-  ]),
+  upload.fields([{ name: "logo", maxCount: 1 }]),
   protect,
   authorizeRoles("company", "adminTFG", "adminLink"),
   validateRequest(updateOpportunityValidation),

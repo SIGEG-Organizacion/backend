@@ -13,6 +13,7 @@ export const createFlyer = async (opportunityId, format, logoUrl) => {
   if (!opportunity) {
     throw new Error("Opportunity not found");
   }
+  console.log("Creating flyer with logo:", logoUrl);
 
   // Definir la ruta de salida para el archivo generado
   const ext = format && format.toLowerCase() === "png" ? "png" : "pdf";
