@@ -104,7 +104,7 @@ export const updateOpportunity = async (req, res, next) => {
     forStudents,
   } = req.body || {};
   try {
-    // Actualizar campos básicos
+    // No permitir actualización de logo en update
     const updated = await updateOpportunityFields(
       uuid,
       description,

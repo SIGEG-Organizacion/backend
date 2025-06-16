@@ -57,12 +57,12 @@ export const updateOpportunityFields = async (
   email,
   status,
   forStudents
+  // logoUrl eliminado
 ) => {
   const opportunity = await Opportunity.findOne({ uuid });
   if (!opportunity) {
     throw AppError.notFound("Not Found: opportunity  doesnt exists");
   }
-  console.log("T0");
   // update only the provided fields
   if (description) opportunity.description = description;
   if (requirements) {
@@ -95,9 +95,8 @@ export const updateOpportunityFields = async (
   if (typeof forStudents === "boolean") {
     opportunity.forStudents = forStudents;
   }
-
+  // No permitir cambio de logoUrl en update
   // Regenerar el flyer sólo si cambió contenido relevante
-  // 4) Regenerar PDF sólo si cambió contenido relevante
   const contentChanged = [
     description,
     requirements,
@@ -105,25 +104,19 @@ export const updateOpportunityFields = async (
     mode,
     deadline,
     forStudents,
-    opportunity.logoUrl,
   ].some((x) => x !== undefined);
-  console.log("Modified paths:", opportunity.modifiedPaths());
   const updated = await opportunity.save();
   if (contentChanged) {
-    console.log("T5");
     const oldFlyer = await Flyer.findOne({ opportunityId: opportunity._id });
     if (!oldFlyer) throw AppError.notFound("Flyer not found");
-    console.log("T6", opportunity?.logoUrl);
     const newFlyer = await createFlyer(
       opportunity._id,
       oldFlyer.format,
       opportunity.logoUrl
     );
-    console.log("T7");
     opportunity.flyerUrl = newFlyer.url;
-    await opportunity.save(); // <--- Asegura que el nuevo path se persista
+    await opportunity.save();
   }
-  console.log("T8");
   return updated;
 };
 
