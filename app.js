@@ -20,6 +20,7 @@ const app = express([
   "https://backend-5e8v.onrender.com/",
   "https://localhost:5000",
   "https://localhost:5173",
+  "https://localhost:3000",
 ]);
 
 //limit request
